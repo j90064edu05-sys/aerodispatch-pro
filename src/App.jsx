@@ -753,131 +753,6 @@ function LoginView({ onLogin }) {
   );
 }
 
-function WeatherView({ zuluTime, aoawsAuth }) {
-  const [activeTab, setActiveTab] = useState('radar');
-  const [imgKey, setImgKey] = useState(Date.now());
-
-  const weatherSources = useMemo(() => ({
-    radar: { 
-      title: "最新雷達回波圖 (Radar)", 
-      urlList: ["https://aoaws.anws.gov.tw/data/www_content/realtime_links/domain4/radar_cwb_45.png"]
-    },
-    vis_satellite: { 
-      title: "最新可見光圖 (VIS Satellite)", 
-      urlList: ["https://aoaws.anws.gov.tw/data/www_content/realtime_links/domain3/mtsat_vis_45.png"]
-    },
-    sigwx_low: { 
-      title: "SFC-10000FT SIGWX", 
-      urlList: getDynamicSigwxUrls('sig1')
-    },
-    sigwx_mid: { 
-      title: "10000-25000FT SIGWX", 
-      urlList: getDynamicSigwxUrls('sig2')
-    },
-    sigwx_high: { 
-      title: "SFC-45000FT SIGWX", 
-      urlList: getDynamicSigwxUrls('sig4')
-    },
-    airmet: { 
-      title: "TPE AIRMET", 
-      urlList: getDynamicAirmetUrls()
-    }
-  }), [imgKey]); 
-
-  const handleRefresh = () => { setImgKey(Date.now()); };
-  const handleTabChange = (tab) => { setActiveTab(tab); };
-
-  return (
-    <div className="max-w-6xl mx-auto flex flex-col h-full space-y-4 w-full">
-      <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-md shrink-0 w-full">
-        <div className="flex gap-2 p-1 bg-slate-900 rounded-lg border border-slate-700 w-full lg:w-auto overflow-x-auto custom-scrollbar">
-          <WeatherTabBtn active={activeTab === 'radar'} onClick={() => handleTabChange('radar')} label="雷達回波 (Radar)" />
-          <WeatherTabBtn active={activeTab === 'vis_satellite'} onClick={() => handleTabChange('vis_satellite')} label="可見光 (VIS)" />
-          <WeatherTabBtn active={activeTab === 'sigwx_low'} onClick={() => handleTabChange('sigwx_low')} label="SFC-10K SIGWX" />
-          <WeatherTabBtn active={activeTab === 'sigwx_mid'} onClick={() => handleTabChange('sigwx_mid')} label="10K-25K SIGWX" />
-          <WeatherTabBtn active={activeTab === 'sigwx_high'} onClick={() => handleTabChange('sigwx_high')} label="SFC-45K SIGWX" />
-          <WeatherTabBtn active={activeTab === 'airmet'} onClick={() => handleTabChange('airmet')} label="TPE AIRMET" />
-        </div>
-        <div className="flex items-center justify-between lg:justify-end gap-4 text-sm w-full lg:w-auto border-t lg:border-t-0 border-slate-800 pt-3 lg:pt-0">
-          <span className="text-slate-400 font-mono flex items-center gap-2 text-xs sm:text-sm">
-            <Clock className="w-4 h-4 shrink-0" /> {zuluTime ? `${zuluTime} Z` : '00:00:00 Z'}
-          </span>
-          <button onClick={handleRefresh} className="flex items-center gap-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 px-3 py-1.5 rounded-md transition-colors border border-blue-500/30 whitespace-nowrap">
-            <RefreshCw className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">強制更新</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col relative w-full min-h-[400px]">
-        <div className="flex-1 p-2 sm:p-4 flex items-center justify-center bg-[#0f172a] relative overflow-auto custom-scrollbar w-full h-full">
-          <WeatherImage 
-            srcList={weatherSources[activeTab].urlList}
-            alt={weatherSources[activeTab].title}
-            auth={aoawsAuth}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SettingsModal({ auth, onSave, onClose }) {
-  const [username, setUsername] = useState(auth.username || '');
-  const [password, setPassword] = useState(auth.password || '');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({ username, password });
-  };
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
-          <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-blue-400" /> 系統設定
-          </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div>
-            <h4 className="text-sm font-semibold text-slate-300 mb-2 border-b border-slate-800 pb-2">AOAWS 驗證</h4>
-            <div className="space-y-4 pt-2">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-slate-400">授權帳號</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-4 w-4 text-slate-500" />
-                  </div>
-                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-md pl-9 pr-3 py-2 focus:border-blue-500 outline-none text-sm" placeholder="AOAWS 帳號" />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-slate-400">授權密碼</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <KeyRound className="h-4 w-4 text-slate-500" />
-                  </div>
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-md pl-9 pr-3 py-2 focus:border-blue-500 outline-none text-sm" placeholder="密碼" />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">取消</button>
-            <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-md text-sm flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" /> 儲存
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, setRoutes }) {
   const [activeTab, setActiveTab] = useState('aircraft');
   
@@ -1102,18 +977,25 @@ function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
   const handleChange = (e) => {
     let { name, value } = e.target;
     
-    // 游標無縫自動格式化機制
+    // 游標無縫自動格式化機制 (徹底解決跳字/游標迷失問題)
     if (name === 'std') {
-      let raw = value.replace(/[^0-9A-Z]/gi, '').toUpperCase();
+      let val = value.toUpperCase().replace(/[^0-9Z:]/g, ''); // 僅允許數字、Z與冒號
       
-      if (raw.length > 5) {
-        raw = raw.slice(0, 5);
-      }
-      
-      if (raw.length >= 3) {
-        value = raw.slice(0, 2) + ':' + raw.slice(2); 
+      // 若使用者正在刪除冒號 (例如從 "12:" 刪除成 "12")，我們允許他保留 "12"
+      if (formData.std.endsWith(':') && formData.std.length === 3 && val.length === 2 && !val.includes(':')) {
+        value = val;
       } else {
-        value = raw; 
+        let raw = val.replace(/:/g, ''); // 提取純字元
+        
+        // ★ 關鍵防呆：只有在剛好輸入完 2 個字元時，才「在尾巴」補上冒號
+        // 這樣輸入第 3 個數字時，是順理成章接在冒號後面，瀏覽器游標就不會錯亂！
+        if (raw.length >= 3) {
+          value = raw.slice(0, 2) + ':' + raw.slice(2, 5); 
+        } else if (raw.length === 2 && !val.includes(':')) {
+          value = raw + ':';
+        } else {
+          value = val; 
+        }
       }
     } else if (name !== 'date') {
       value = value.toUpperCase();
