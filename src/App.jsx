@@ -21,30 +21,33 @@ const initialAirports = [
   { icao: 'VHHH', name: 'HONG KONG INTL' },
   { icao: 'RJTT', name: 'TOKYO HANEDA' },
   { icao: 'KBOS', name: 'BOSTON LOGAN INTL' },
+  { icao: 'KEWR', name: 'NEWARK LIBERTY INTL' },
   { icao: 'VMMC', name: 'MACAU INTL' },
   { icao: 'RJAA', name: 'TOKYO NARITA' },
   { icao: 'RCKH', name: 'KAOHSIUNG INTL' },
-  { icao: 'RCQC', name: 'MAKUNG' }
+  { icao: 'RCQC', name: 'MAKUNG' },
+  { icao: 'RCMQ', name: 'TAICHUNG INTL' },
+  { icao: 'RCSS', name: 'TAIPEI SONGSHAN' }
 ];
 
 const initialRoutes = [
   {
-    id: 'r1', dep: 'RCTP', arr: 'KJFK', altnApt: 'KBOS', acftType: 'B777-300ER', distance: 6800,
+    id: 'r1', dep: 'RCTP', arr: 'KJFK', acftType: 'B777-300ER', distance: 6800, blockTime: 870,
     atcRoute: 'SID CHALI M750 ENVAR OTR8 SEALS 50N160E 50N170E 49N180E 47N170W 45N160W 43N150W 40N140W 38N130W 35N120W STAR',
-    trip: 105000, altn: 4500, finres: 3200, cont: 5250, taxi: 800, extra: 2000,
-    minFuel: 118750, minDivFuel: 7750, rampFuel: 120750
+    altn1Apt: 'KBOS', altn2Apt: 'KEWR', altn3Apt: '',
+    trip: 105000, altn1: 4500, altn2: 4800, altn3: 0, finres: 3200, cont: 5250, taxi: 800, extra: 2000
   },
   {
-    id: 'r2', dep: 'RCTP', arr: 'VHHH', altnApt: 'VMMC', acftType: 'A330-300', distance: 430,
+    id: 'r2', dep: 'RCTP', arr: 'VHHH', acftType: 'A330-300', distance: 430, blockTime: 105,
     atcRoute: 'SID CHALI T1 KADAP M750 ENVAR V512 ABBEY STAR',
-    trip: 12500, altn: 2100, finres: 1800, cont: 625, taxi: 400, extra: 0,
-    minFuel: 17425, minDivFuel: 3950, rampFuel: 17425
+    altn1Apt: 'VMMC', altn2Apt: '', altn3Apt: '',
+    trip: 12500, altn1: 2100, altn2: 0, altn3: 0, finres: 1800, cont: 625, taxi: 400, extra: 0
   },
   {
-    id: 'r3', dep: 'RCKH', arr: 'RCQC', altnApt: 'RCKH', acftType: 'ATR72-600', distance: 122,
-    atcRoute: 'SID TNN W4 RCQC STAR',
-    trip: 460, altn: 430, finres: 300, cont: 200, taxi: 100, extra: 0,
-    minFuel: 1490, minDivFuel: 780, rampFuel: 1490
+    id: 'r3', dep: 'RCKH', arr: 'RCQC', acftType: 'ATR72-600', distance: 122, blockTime: 45,
+    atcRoute: 'TNN1C TNN W6 MKG SEGMA',
+    altn1Apt: 'RCKH', altn2Apt: 'RCMQ', altn3Apt: 'RCSS',
+    trip: 460, altn1: 430, altn2: 400, altn3: 580, finres: 300, cont: 200, taxi: 100, extra: 0
   }
 ];
 
@@ -58,15 +61,17 @@ const initialFlights = [
     date: '2026-02-27',
     dep: 'RCTP',
     arr: 'KJFK',
-    altn: 'KBOS',
+    altn1: 'KBOS',
+    altn2: 'KEWR',
+    altn3: '',
     std: '23:35Z',
-    sta: '14:15Z',
+    sta: '14:05Z',
     status: 'CLEARED',
     dispatcherSign: 'DP_AUTH_01',
     captainSign: null,
     route: 'SID CHALI M750 ENVAR OTR8 SEALS 50N160E 50N170E 49N180E 47N170W 45N160W 43N150W 40N140W 38N130W 35N120W STAR',
     weights: { zfw: 220500, payload: 52000, tow: 335000, law: 245000 },
-    fuel: { trip: 105000, cont: 5250, altn: 4500, finres: 3200, extra: 2000, taxi: 800 },
+    fuel: { trip: 105000, cont: 5250, altn1: 4500, altn2: 4800, altn3: 0, finres: 3200, extra: 2000, taxi: 800 },
     remarks: 'NIL SIG WX ENROUTE. CHECK NOTAM FOR KJFK RWY CLOSURE.',
     ddItems: 'NIL'
   },
@@ -79,7 +84,9 @@ const initialFlights = [
     date: '2026-02-28',
     dep: 'RCTP',
     arr: 'VHHH',
-    altn: 'VMMC',
+    altn1: 'VMMC',
+    altn2: '',
+    altn3: '',
     std: '04:00Z',
     sta: '05:45Z',
     status: 'PREFLIGHT',
@@ -87,11 +94,30 @@ const initialFlights = [
     captainSign: null,
     route: 'SID CHALI T1 KADAP M750 ENVAR V512 ABBEY STAR',
     weights: { zfw: 165000, payload: 38000, tow: 195000, law: 182000 },
-    fuel: { trip: 12500, cont: 625, altn: 2100, finres: 1800, extra: 0, taxi: 400 },
+    fuel: { trip: 12500, cont: 625, altn1: 2100, altn2: 0, altn3: 0, finres: 1800, extra: 0, taxi: 400 },
     remarks: 'VHHH EXP DELAY DUE TO HEAVY TFC.',
     ddItems: 'NIL'
   }
 ];
+
+// --- Block In Time Auto Calculation Helper ---
+const calculateBlockIn = (stdStr, blockTimeMins) => {
+  if (!stdStr || !blockTimeMins) return '';
+  const raw = stdStr.replace(/[^0-9]/g, '');
+  if (raw.length < 4) return '';
+  
+  const hrs = parseInt(raw.slice(0, 2), 10);
+  const mins = parseInt(raw.slice(2, 4), 10);
+  
+  if (isNaN(hrs) || isNaN(mins)) return '';
+  
+  const totalMins = hrs * 60 + mins + Number(blockTimeMins);
+  const newHrs = Math.floor(totalMins / 60) % 24;
+  const newMins = totalMins % 60;
+  
+  // 移除 Z 尾綴，僅回傳 HH:MM 時間格式
+  return `${String(newHrs).padStart(2, '0')}:${String(newMins).padStart(2, '0')}`;
+};
 
 // --- Dynamic URL Generators & Weather Logic ---
 const parseTargetDate = (dateStr, timeStr) => {
@@ -149,6 +175,9 @@ const getDynamicAirmetUrls = (targetDateStr = null, targetHourStr = null) => {
       const startStr = formatDDHHMM(start);
       const endStr = formatDDHHMM(end);
       
+      urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_06_${startStr}_${endStr}.jpg`);
+      urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_05_${startStr}_${endStr}.jpg`);
+      urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_04_${startStr}_${endStr}.jpg`);
       urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_03_${startStr}_${endStr}.jpg`);
       urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_02_${startStr}_${endStr}.jpg`);
       urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_01_${startStr}_${endStr}.jpg`);
@@ -205,7 +234,6 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null); 
   const [currentView, setCurrentView] = useState('dashboard'); 
   
-  // App Data State
   const [flights, setFlights] = useState(initialFlights);
   const [aircrafts, setAircrafts] = useState(initialAircrafts);
   const [airports, setAirports] = useState(initialAirports);
@@ -217,16 +245,14 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // ★ 新增：統一的 App Settings 狀態 (包含氣象與 AI)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [appSettings, setAppSettings] = useState({ 
     username: '', 
     password: '', 
     geminiApiKey: '', 
-    aiModel: 'gemini-3-flash-preview' 
+    aiModel: 'gemini-3.1-pro-preview' 
   });
 
-  // ZULU Clock Effect
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -259,7 +285,6 @@ export default function App() {
     setCurrentView('dashboard');
   };
 
-  // ★ 新增：更新航班資料 (包含儲存編輯後的 Remarks)
   const handleUpdateFlight = (updatedFlight) => {
     setFlights(flights.map(f => f.id === updatedFlight.id ? updatedFlight : f));
     if (selectedFlight?.id === updatedFlight.id) {
@@ -486,7 +511,7 @@ function StatusCard({ title, value, color }) {
   );
 }
 
-function FormInput({ label, name, value, onChange, placeholder, type = "text", readonly = false }) {
+function FormInput({ label, name, value, onChange, placeholder, type = "text", readonly = false, required = false }) {
   return (
     <div className="w-full flex flex-col min-w-0">
       <label className="block text-xs font-medium text-slate-400 mb-1.5 truncate" title={label}>{label}</label>
@@ -498,13 +523,13 @@ function FormInput({ label, name, value, onChange, placeholder, type = "text", r
         placeholder={placeholder} 
         readOnly={readonly}
         className={`w-full bg-slate-900 border border-slate-700 rounded-md p-2.5 text-slate-200 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-mono placeholder:text-slate-600 transition-colors ${type === 'date' ? '' : 'uppercase'} ${readonly ? 'opacity-50 cursor-not-allowed' : ''}`} 
-        required={!readonly} 
+        required={required && !readonly} 
       />
     </div>
   );
 }
 
-function FormSelect({ label, name, value, onChange, options, defaultOption }) {
+function FormSelect({ label, name, value, onChange, options, defaultOption, required = false }) {
   return (
     <div className="w-full flex flex-col min-w-0">
       <label className="block text-xs font-medium text-slate-400 mb-1.5 truncate" title={label}>{label}</label>
@@ -513,11 +538,13 @@ function FormSelect({ label, name, value, onChange, options, defaultOption }) {
         value={value}
         onChange={onChange}
         className="w-full bg-slate-900 border border-slate-700 rounded-md p-2.5 text-slate-200 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-mono transition-colors"
-        required
+        required={required}
       >
         <option value="" disabled className="text-slate-500">{defaultOption}</option>
         {options.map((opt, idx) => (
-          <option key={idx} value={opt.value}>{opt.label}</option>
+          <option key={idx} value={opt.value} disabled={opt.disabled} className={opt.disabled ? "text-slate-600 bg-slate-900" : ""}>
+            {opt.label}
+          </option>
         ))}
       </select>
     </div>
@@ -606,7 +633,7 @@ function WeatherImage({ srcList, alt, auth, isBriefing = false }) {
             console.warn(`❌ [失敗] Fetch 發生 CORS 或網路錯誤:`, e.message); 
           }
         } else {
-          console.log('-> [方法1] 未設定帳密，跳過 Auth Fetch。');
+          console.log('-> [方法1] 未設定帳密或此為公開圖資，跳過 Auth Fetch。');
         }
 
         try {
@@ -714,6 +741,74 @@ function WeatherImage({ srcList, alt, auth, isBriefing = false }) {
   );
 }
 
+function WeatherView({ zuluTime, appSettings }) {
+  const [activeTab, setActiveTab] = useState('radar');
+  const [imgKey, setImgKey] = useState(Date.now());
+
+  const weatherSources = useMemo(() => ({
+    radar: { 
+      title: "最新雷達回波圖 (Radar)", 
+      urlList: ["https://aoaws.anws.gov.tw/data/www_content/realtime_links/domain4/radar_cwb_45.png"]
+    },
+    vis_satellite: { 
+      title: "最新可見光圖 (VIS Satellite)", 
+      urlList: ["https://aoaws.anws.gov.tw/data/www_content/realtime_links/domain3/mtsat_vis_45.png"]
+    },
+    sigwx_low: { 
+      title: "SFC-10000FT SIGWX", 
+      urlList: getDynamicSigwxUrls('sig1')
+    },
+    sigwx_mid: { 
+      title: "10000-25000FT SIGWX", 
+      urlList: getDynamicSigwxUrls('sig2')
+    },
+    sigwx_high: { 
+      title: "SFC-45000FT SIGWX", 
+      urlList: getDynamicSigwxUrls('sig4')
+    },
+    airmet: { 
+      title: "TPE AIRMET", 
+      urlList: getDynamicAirmetUrls()
+    }
+  }), [imgKey]); 
+
+  const handleRefresh = () => { setImgKey(Date.now()); };
+  const handleTabChange = (tab) => { setActiveTab(tab); };
+
+  return (
+    <div className="max-w-6xl mx-auto flex flex-col h-full space-y-4 w-full">
+      <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-md shrink-0 w-full">
+        <div className="flex gap-2 p-1 bg-slate-900 rounded-lg border border-slate-700 w-full lg:w-auto overflow-x-auto custom-scrollbar">
+          <WeatherTabBtn active={activeTab === 'radar'} onClick={() => handleTabChange('radar')} label="雷達回波 (Radar)" />
+          <WeatherTabBtn active={activeTab === 'vis_satellite'} onClick={() => handleTabChange('vis_satellite')} label="可見光 (VIS)" />
+          <WeatherTabBtn active={activeTab === 'sigwx_low'} onClick={() => handleTabChange('sigwx_low')} label="SFC-10K SIGWX" />
+          <WeatherTabBtn active={activeTab === 'sigwx_mid'} onClick={() => handleTabChange('sigwx_mid')} label="10K-25K SIGWX" />
+          <WeatherTabBtn active={activeTab === 'sigwx_high'} onClick={() => handleTabChange('sigwx_high')} label="SFC-45K SIGWX" />
+          <WeatherTabBtn active={activeTab === 'airmet'} onClick={() => handleTabChange('airmet')} label="TPE AIRMET" />
+        </div>
+        <div className="flex items-center justify-between lg:justify-end gap-4 text-sm w-full lg:w-auto border-t lg:border-t-0 border-slate-800 pt-3 lg:pt-0">
+          <span className="text-slate-400 font-mono flex items-center gap-2 text-xs sm:text-sm">
+            <Clock className="w-4 h-4 shrink-0" /> {zuluTime ? `${zuluTime} Z` : '00:00:00 Z'}
+          </span>
+          <button onClick={handleRefresh} className="flex items-center gap-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 px-3 py-1.5 rounded-md transition-colors border border-blue-500/30 whitespace-nowrap">
+            <RefreshCw className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">強制更新</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col relative w-full min-h-[400px]">
+        <div className="flex-1 p-2 sm:p-4 flex items-center justify-center bg-[#0f172a] relative overflow-auto custom-scrollbar w-full h-full">
+          <WeatherImage 
+            srcList={weatherSources[activeTab].urlList}
+            alt={weatherSources[activeTab].title}
+            auth={appSettings}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --- Views ---
 function LoginView({ onLogin }) {
   const [role, setRole] = useState('dispatcher'); 
@@ -766,513 +861,6 @@ function LoginView({ onLogin }) {
             <ChevronRight className="w-4 h-4" />
           </button>
         </form>
-      </div>
-    </div>
-  );
-}
-
-function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, setRoutes }) {
-  const [activeTab, setActiveTab] = useState('aircraft');
-  
-  const [acftForm, setAcftForm] = useState({ registration: '', type: '', airline: '' });
-  const handleAcftSubmit = (e) => {
-    e.preventDefault();
-    if (acftForm.registration && acftForm.type) {
-      setAircrafts([...aircrafts, { ...acftForm, registration: acftForm.registration.toUpperCase(), airline: acftForm.airline.toUpperCase() }]);
-      setAcftForm({ registration: '', type: '', airline: '' });
-    }
-  };
-
-  const [aptForm, setAptForm] = useState({ icao: '', name: '' });
-  const handleAptSubmit = (e) => {
-    e.preventDefault();
-    if (aptForm.icao && aptForm.name) {
-      setAirports([...airports, { ...aptForm, icao: aptForm.icao.toUpperCase(), name: aptForm.name.toUpperCase() }]);
-      setAptForm({ icao: '', name: '' });
-    }
-  };
-
-  const [editingRouteId, setEditingRouteId] = useState(null);
-
-  const [rtForm, setRtForm] = useState({
-    dep: '', arr: '', altnApt: '', acftType: '', distance: '', atcRoute: '',
-    trip: '', altn: '', finres: '', cont: '', taxi: '', extra: ''
-  });
-
-  const tF = Number(rtForm.trip) || 0;
-  const aF = Number(rtForm.altn) || 0;
-  const frF = Number(rtForm.finres) || 0;
-  const cF = Number(rtForm.cont) || 0;
-  const txF = Number(rtForm.taxi) || 0;
-  const exF = Number(rtForm.extra) || 0;
-
-  const minFuel = tF + aF + frF + cF + txF;
-  const minDivFuel = aF + frF + 50;
-  const rampFuel = minFuel + exF;
-
-  const handleRtSubmit = (e) => {
-    e.preventDefault();
-    if (rtForm.dep && rtForm.arr && rtForm.altnApt && rtForm.acftType) {
-      
-      const newRouteData = {
-        ...rtForm, 
-        distance: Number(rtForm.distance),
-        atcRoute: rtForm.atcRoute.toUpperCase(),
-        trip: tF, altn: aF, finres: frF, cont: cF, taxi: txF, extra: exF,
-        minFuel, minDivFuel, rampFuel 
-      };
-
-      if (editingRouteId) {
-        setRoutes(routes.map(r => r.id === editingRouteId ? { ...newRouteData, id: editingRouteId } : r));
-        setEditingRouteId(null);
-      } else {
-        setRoutes([...routes, { ...newRouteData, id: Date.now().toString() }]);
-      }
-      
-      setRtForm({ dep: '', arr: '', altnApt: '', acftType: '', distance: '', atcRoute: '', trip: '', altn: '', finres: '', cont: '', taxi: '', extra: '' });
-    }
-  };
-
-  const handleEditRoute = (rt) => {
-    setEditingRouteId(rt.id);
-    setRtForm({
-      dep: rt.dep, arr: rt.arr, altnApt: rt.altnApt, acftType: rt.acftType, 
-      distance: rt.distance, atcRoute: rt.atcRoute,
-      trip: rt.trip, altn: rt.altn, finres: rt.finres, cont: rt.cont, taxi: rt.taxi, extra: rt.extra
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingRouteId(null);
-    setRtForm({ dep: '', arr: '', altnApt: '', acftType: '', distance: '', atcRoute: '', trip: '', altn: '', finres: '', cont: '', taxi: '', extra: '' });
-  };
-
-  const uniqueAcftTypes = [...new Set(aircrafts.map(a => a.type))];
-  const aptOptions = airports.map(a => ({ value: a.icao, label: `${a.icao} - ${a.name}` }));
-  const acftTypeOptions = uniqueAcftTypes.map(t => ({ value: t, label: t }));
-
-  return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex gap-2 p-1 bg-slate-950 rounded-lg border border-slate-800 w-fit overflow-x-auto custom-scrollbar max-w-full">
-        <button onClick={() => setActiveTab('aircraft')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'aircraft' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>機隊管理 (Aircrafts)</button>
-        <button onClick={() => setActiveTab('airport')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'airport' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>機場管理 (Airports)</button>
-        <button onClick={() => setActiveTab('route')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'route' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>航線與燃油 (Routes & Fuel)</button>
-      </div>
-
-      {activeTab === 'aircraft' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-lg h-fit">
-            <h3 className="font-semibold text-slate-200 mb-4 border-b border-slate-800 pb-2">新增航機 (Add Aircraft)</h3>
-            <form onSubmit={handleAcftSubmit} className="space-y-4">
-              <FormInput label="註冊編號 (Registration)" name="registration" value={acftForm.registration} onChange={e => setAcftForm({...acftForm, registration: e.target.value})} placeholder="e.g. B-16722" />
-              <FormInput label="機型 (Type)" name="type" value={acftForm.type} onChange={e => setAcftForm({...acftForm, type: e.target.value})} placeholder="e.g. B777-300ER" />
-              <FormInput label="航空公司 (Airline)" name="airline" value={acftForm.airline} onChange={e => setAcftForm({...acftForm, airline: e.target.value})} placeholder="e.g. BR" />
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md text-sm font-medium transition-colors">加入資料庫</button>
-            </form>
-          </div>
-          <div className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col max-h-[600px]">
-            <div className="overflow-x-auto overflow-y-auto custom-scrollbar">
-              <table className="w-full text-left min-w-[500px]">
-                <thead>
-                  <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider sticky top-0 z-10">
-                    <th className="px-5 py-3">註冊編號</th>
-                    <th className="px-5 py-3">機型</th>
-                    <th className="px-5 py-3">航空公司</th>
-                    <th className="px-5 py-3 text-right">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {aircrafts.map((acft, idx) => (
-                    <tr key={idx} className="hover:bg-slate-900/50">
-                      <td className="px-5 py-3 font-mono font-bold text-slate-200">{acft.registration}</td>
-                      <td className="px-5 py-3 text-sm text-slate-300">{acft.type}</td>
-                      <td className="px-5 py-3 text-sm text-slate-400">{acft.airline}</td>
-                      <td className="px-5 py-3 text-right">
-                        <button onClick={() => setAircrafts(aircrafts.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-300 p-1"><Trash2 className="w-4 h-4"/></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'airport' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-lg h-fit">
-            <h3 className="font-semibold text-slate-200 mb-4 border-b border-slate-800 pb-2">新增機場 (Add Airport)</h3>
-            <form onSubmit={handleAptSubmit} className="space-y-4">
-              <FormInput label="ICAO 代碼" name="icao" value={aptForm.icao} onChange={e => setAptForm({...aptForm, icao: e.target.value})} placeholder="e.g. RCTP" />
-              <FormInput label="機場名稱 (Name)" name="name" value={aptForm.name} onChange={e => setAptForm({...aptForm, name: e.target.value})} placeholder="e.g. TAIPEI TAOYUAN" />
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md text-sm font-medium transition-colors">加入資料庫</button>
-            </form>
-          </div>
-          <div className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col max-h-[600px]">
-            <div className="overflow-x-auto overflow-y-auto custom-scrollbar">
-              <table className="w-full text-left min-w-[500px]">
-                <thead>
-                  <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider sticky top-0 z-10">
-                    <th className="px-5 py-3">ICAO</th>
-                    <th className="px-5 py-3">機場名稱</th>
-                    <th className="px-5 py-3 text-right">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {airports.map((apt, idx) => (
-                    <tr key={idx} className="hover:bg-slate-900/50">
-                      <td className="px-5 py-3 font-mono font-bold text-slate-200">{apt.icao}</td>
-                      <td className="px-5 py-3 text-sm text-slate-300">{apt.name}</td>
-                      <td className="px-5 py-3 text-right">
-                        <button onClick={() => setAirports(airports.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-300 p-1"><Trash2 className="w-4 h-4"/></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'route' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-lg h-fit max-h-[800px] overflow-y-auto custom-scrollbar">
-            <h3 className="font-semibold text-slate-200 mb-4 border-b border-slate-800 pb-2">
-              {editingRouteId ? '編輯航線 (Edit Route)' : '新增航線 (Add Route)'}
-            </h3>
-            <form onSubmit={handleRtSubmit}>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <FormSelect label="起飛 (DEP)" name="dep" value={rtForm.dep} onChange={e => setRtForm({...rtForm, dep: e.target.value})} options={aptOptions} defaultOption="-- DEP --" />
-                  <FormSelect label="降落 (ARR)" name="arr" value={rtForm.arr} onChange={e => setRtForm({...rtForm, arr: e.target.value})} options={aptOptions} defaultOption="-- ARR --" />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <FormSelect label="備降 (ALTN)" name="altnApt" value={rtForm.altnApt} onChange={e => setRtForm({...rtForm, altnApt: e.target.value})} options={aptOptions} defaultOption="-- ALTN --" />
-                  <FormSelect label="適用機型 (Type)" name="acftType" value={rtForm.acftType} onChange={e => setRtForm({...rtForm, acftType: e.target.value})} options={acftTypeOptions} defaultOption="-- TYPE --" />
-                </div>
-                <FormInput label="距離 (Distance NM)" name="distance" value={rtForm.distance} onChange={e => setRtForm({...rtForm, distance: e.target.value})} placeholder="e.g. 6800" type="number" />
-              </div>
-
-              <div className="w-full mt-3 mb-2">
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">ATC 航路 (ATC Route)</label>
-                <textarea name="atcRoute" value={rtForm.atcRoute} onChange={e => setRtForm({...rtForm, atcRoute: e.target.value.toUpperCase()})} rows="2" className="w-full bg-slate-900 border border-slate-700 rounded-md p-2.5 text-slate-200 text-sm font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-shadow custom-scrollbar resize-y" placeholder="SID WAYPOINT AWY WAYPOINT STAR..." />
-              </div>
-              
-              <h4 className="text-xs font-semibold text-slate-400 border-b border-slate-800 pb-1 mt-4 mb-2">燃油政策 Fuel Policy (KGS)</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <FormInput label="TRIP FUEL" name="trip" value={rtForm.trip} onChange={e => setRtForm({...rtForm, trip: e.target.value})} type="number" />
-                <FormInput label="ALTN FUEL" name="altn" value={rtForm.altn} onChange={e => setRtForm({...rtForm, altn: e.target.value})} type="number" />
-                <FormInput label="FINAL RES" name="finres" value={rtForm.finres} onChange={e => setRtForm({...rtForm, finres: e.target.value})} type="number" />
-                <FormInput label="CONT FUEL" name="cont" value={rtForm.cont} onChange={e => setRtForm({...rtForm, cont: e.target.value})} type="number" />
-                <FormInput label="TAXI FUEL" name="taxi" value={rtForm.taxi} onChange={e => setRtForm({...rtForm, taxi: e.target.value})} type="number" />
-                <FormInput label="EXTRA FUEL" name="extra" value={rtForm.extra} onChange={e => setRtForm({...rtForm, extra: e.target.value})} type="number" />
-              </div>
-
-              <div className="bg-slate-900 p-3 rounded-lg border border-slate-700 space-y-1.5 mt-2">
-                <FuelRow label="MIN FUEL" value={minFuel} bold isBlue />
-                <FuelRow label="MIN DIV" value={minDivFuel} />
-                <div className="border-t border-slate-700 my-1"></div>
-                <FuelRow label="RAMP FUEL" value={rampFuel} bold isGreen textLarge />
-              </div>
-
-              <div className="flex gap-2 mt-4">
-                <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md text-sm font-medium transition-colors">
-                  {editingRouteId ? '儲存修改' : '加入航線資料庫'}
-                </button>
-                {editingRouteId && (
-                  <button type="button" onClick={handleCancelEdit} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md text-sm font-medium transition-colors">
-                    取消
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-          
-          <div className="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col max-h-[800px]">
-            <div className="overflow-x-auto overflow-y-auto custom-scrollbar">
-              <table className="w-full text-left min-w-[850px]">
-                <thead>
-                  <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider sticky top-0 z-10">
-                    <th className="px-4 py-3">航線 (Route)</th>
-                    <th className="px-4 py-3">機型 (Type)</th>
-                    <th className="px-4 py-3">ATC 航路</th>
-                    <th className="px-4 py-3">距離</th>
-                    <th className="px-4 py-3">RAMP FUEL</th>
-                    <th className="px-4 py-3 text-right">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {routes.map((rt) => (
-                    <tr key={rt.id} className="hover:bg-slate-900/50">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 font-mono font-bold text-slate-200">
-                          <span>{rt.dep}</span>
-                          <ChevronRight className="w-3 h-3 text-slate-600" />
-                          <span>{rt.arr}</span>
-                          <span className="text-yellow-400 text-xs ml-1">({rt.altnApt})</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-300">{rt.acftType}</td>
-                      <td className="px-4 py-3 text-xs text-slate-400 font-mono truncate max-w-[200px]" title={rt.atcRoute}>{rt.atcRoute}</td>
-                      <td className="px-4 py-3 text-sm text-slate-400">{rt.distance} NM</td>
-                      <td className="px-4 py-3 text-sm font-mono font-bold text-green-400">{rt.rampFuel.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <button onClick={() => handleEditRoute(rt)} className="text-blue-400 hover:text-blue-300 p-1.5 mr-1 bg-blue-500/10 rounded" title="編輯航線"><Edit className="w-4 h-4"/></button>
-                        <button onClick={() => setRoutes(routes.filter(r => r.id !== rt.id))} className="text-red-400 hover:text-red-300 p-1.5 bg-red-500/10 rounded" title="刪除"><Trash2 className="w-4 h-4"/></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    callsign: '', airline: '', aircraft: '', registration: '',
-    date: new Date().toISOString().split('T')[0],
-    dep: '', arr: '', altn: '', std: '', route: '', zfw: '', payload: '',
-    remarks: 'NIL SIG WX ENROUTE.',
-    ddItems: 'NIL'
-  });
-
-  const handleChange = (e) => {
-    let { name, value } = e.target;
-    
-    if (name === 'std') {
-      let val = value.toUpperCase().replace(/[^0-9Z:]/g, '');
-      let rawNums = val.replace(/[^0-9]/g, '');
-
-      if (rawNums.length >= 4) {
-        let zPart = val.includes('Z') ? 'Z' : '';
-        value = rawNums.slice(0, 2) + ':' + rawNums.slice(2, 4) + zPart;
-      } else {
-        value = val;
-      }
-    } else if (name !== 'date' && name !== 'remarks') {
-      value = value.toUpperCase();
-    }
-    
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleAircraftChange = (e) => {
-    const reg = e.target.value;
-    const selectedAcft = aircrafts.find(a => a.registration === reg);
-    if (selectedAcft) {
-      setFormData(prev => ({
-        ...prev,
-        registration: selectedAcft.registration,
-        aircraft: selectedAcft.type,
-        airline: selectedAcft.airline
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, registration: reg }));
-    }
-  };
-
-  const matchingRoute = useMemo(() => {
-    return routes.find(r => 
-      r.dep === formData.dep && 
-      r.arr === formData.arr && 
-      r.altnApt === formData.altn && 
-      r.acftType === formData.aircraft
-    );
-  }, [routes, formData.dep, formData.arr, formData.altn, formData.aircraft]);
-
-  useEffect(() => {
-    if (matchingRoute && matchingRoute.atcRoute) {
-      setFormData(prev => ({ ...prev, route: matchingRoute.atcRoute }));
-    }
-  }, [matchingRoute]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const zfwNum = parseInt(formData.zfw) || 60000;
-    
-    let trip, cont, altn, finres, taxi, extra;
-
-    if (matchingRoute) {
-      trip = matchingRoute.trip;
-      cont = matchingRoute.cont;
-      altn = matchingRoute.altn;
-      finres = matchingRoute.finres;
-      taxi = matchingRoute.taxi;
-      extra = matchingRoute.extra || 0;
-    } else {
-      trip = Math.floor(zfwNum * 0.15);
-      cont = Math.floor(trip * 0.05);
-      altn = 2500;
-      finres = 1500;
-      taxi = 300;
-      extra = 0;
-    }
-
-    const totalFuel = trip + cont + altn + finres + extra + taxi;
-    
-    const newFlight = {
-      ...formData,
-      status: 'PREFLIGHT', sta: 'TBD',
-      dispatcherSign: null, captainSign: null,
-      weights: { zfw: zfwNum, payload: parseInt(formData.payload) || 15000, tow: zfwNum + totalFuel, law: zfwNum + totalFuel - trip },
-      fuel: { trip, cont, altn, finres, extra, taxi }
-    };
-    onSubmit(newFlight);
-  };
-
-  return (
-    <div className="max-w-5xl mx-auto pb-10 w-full">
-      <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-xl w-full">
-        <div className="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-4 flex items-center gap-3">
-          <Settings className="w-5 h-5 text-blue-400 shrink-0" />
-          <h3 className="font-semibold text-lg text-slate-100">建立新營運飛行計畫 (Generate New OFP)</h3>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-8">
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-slate-400 border-b border-slate-800 pb-2 uppercase tracking-wider flex items-center gap-2"><Info className="w-4 h-4"/> Flight Information</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <FormInput label="航班號 (Callsign)" name="callsign" value={formData.callsign} onChange={handleChange} placeholder="e.g. CAL101" />
-              
-              <FormSelect 
-                label="註冊編號 (Registration)" 
-                name="registration" 
-                value={formData.registration} 
-                onChange={handleAircraftChange} 
-                options={aircrafts.map(a => ({ value: a.registration, label: `${a.registration} (${a.type})` }))}
-                defaultOption="-- 選擇航機 --"
-              />
-
-              <FormInput label="機型 (Aircraft)" name="aircraft" value={formData.aircraft} onChange={handleChange} placeholder="Auto-filled" readonly />
-              <FormInput label="航空公司 (Airline)" name="airline" value={formData.airline} onChange={handleChange} placeholder="Auto-filled" readonly />
-            </div>
-          </div>
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-slate-400 border-b border-slate-800 pb-2 uppercase tracking-wider flex items-center gap-2"><Map className="w-4 h-4"/> Routing & Schedule</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
-              <FormInput label="預計起飛日期 (Date)" name="date" value={formData.date} onChange={handleChange} type="date" />
-              
-              <FormSelect 
-                label="起飛機場 (DEP)" name="dep" value={formData.dep} onChange={handleChange} 
-                options={airports.map(a => ({ value: a.icao, label: `${a.icao} - ${a.name}` }))} defaultOption="-- DEP --"
-              />
-              <FormSelect 
-                label="降落機場 (ARR)" name="arr" value={formData.arr} onChange={handleChange} 
-                options={airports.map(a => ({ value: a.icao, label: `${a.icao} - ${a.name}` }))} defaultOption="-- ARR --"
-              />
-              <FormSelect 
-                label="備降機場 (ALTN)" name="altn" value={formData.altn} onChange={handleChange} 
-                options={airports.map(a => ({ value: a.icao, label: `${a.icao} - ${a.name}` }))} defaultOption="-- ALTN --"
-              />
-              
-              <FormInput label="預計起飛時間 (STD)" name="std" value={formData.std} onChange={handleChange} placeholder="HH:MMZ" />
-            </div>
-            <div className="w-full mt-4">
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">ATC 航路 (ATC Route)</label>
-              <textarea name="route" value={formData.route} onChange={handleChange} rows="3" className="w-full bg-slate-900 border border-slate-700 rounded-md p-3 text-slate-200 text-sm font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-shadow custom-scrollbar resize-y" placeholder="SID WAYPOINT AWY WAYPOINT STAR..." />
-            </div>
-          </div>
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-slate-400 border-b border-slate-800 pb-2 uppercase tracking-wider">Load (KGS)</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <FormInput label="預估無油重量 (Est. ZFW)" name="zfw" value={formData.zfw} onChange={handleChange} placeholder="e.g. 62000" type="number" />
-              <FormInput label="預估商載 (Est. Payload)" name="payload" value={formData.payload} onChange={handleChange} placeholder="e.g. 15000" type="number" />
-            </div>
-            
-            <div className={`p-3 rounded-md border text-sm flex items-center gap-2 mt-4 ${matchingRoute ? 'bg-green-900/20 border-green-800 text-green-400' : 'bg-yellow-900/20 border-yellow-800 text-yellow-400'}`}>
-              {matchingRoute ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
-              <span>
-                {matchingRoute 
-                  ? `已自動套用公司航線燃油與 ATC 航路 (MIN FUEL: ${matchingRoute.minFuel.toLocaleString()} KGS)`
-                  : '未找到符合的航線、備降場與機型設定，將使用系統標準公式估算燃油'
-                }
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-slate-800">
-            <button type="button" onClick={onCancel} className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-white bg-slate-800 sm:bg-transparent hover:bg-slate-700 sm:hover:bg-slate-800 rounded-md transition-colors border border-transparent sm:border-slate-700">取消 (Cancel)</button>
-            <button type="submit" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-900/20 border border-blue-500">
-              <CheckCircle className="w-4 h-4" /> 產生飛行計畫 (Generate OFP)
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function DashboardView({ flights, onView }) {
-  return (
-    <div className="space-y-6 w-full max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-        <StatusCard title="總監控航班 (Total)" value={flights.length.toString()} color="text-blue-400" />
-        <StatusCard title="已放行 (Disp. Cleared)" value={flights.filter(f => f.status === 'CLEARED' || f.status === 'ACCEPTED').length.toString()} color="text-green-400" />
-        <StatusCard title="機長已確認 (Capt. Accepted)" value={flights.filter(f => f.status === 'ACCEPTED').length.toString()} color="text-indigo-400" />
-      </div>
-
-      <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col w-full">
-        <div className="px-4 lg:px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-          <h3 className="font-semibold text-slate-200">當前航班清單 (Active Flights)</h3>
-        </div>
-        <div className="overflow-x-auto custom-scrollbar w-full">
-          <table className="w-full text-left border-collapse min-w-[700px]">
-            <thead>
-              <tr className="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
-                <th className="px-4 lg:px-6 py-4 font-medium">航班號</th>
-                <th className="px-4 lg:px-6 py-4 font-medium">航機</th>
-                <th className="px-4 lg:px-6 py-4 font-medium">航線</th>
-                <th className="px-4 lg:px-6 py-4 font-medium">預計起飛</th>
-                <th className="px-4 lg:px-6 py-4 font-medium">狀態</th>
-                <th className="px-4 lg:px-6 py-4 font-medium text-right">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {flights.map((flight) => (
-                <tr key={flight.id} className="hover:bg-slate-800/50 transition-colors group">
-                  <td className="px-4 lg:px-6 py-4">
-                    <div className="font-bold text-slate-200">{flight.callsign}</div>
-                    <div className="text-xs text-slate-500">{flight.airline}</div>
-                  </td>
-                  <td className="px-4 lg:px-6 py-4">
-                    <div className="text-sm text-slate-300">{flight.aircraft}</div>
-                    <div className="text-xs text-slate-500">{flight.registration}</div>
-                  </td>
-                  <td className="px-4 lg:px-6 py-4">
-                    <div className="flex items-center gap-2 text-sm text-slate-300 font-mono">
-                      <span>{flight.dep}</span>
-                      <ChevronRight className="w-3 h-3 text-slate-600" />
-                      <span>{flight.arr}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 lg:px-6 py-4">
-                    <div className="text-sm text-slate-300 font-mono">{flight.std}</div>
-                  </td>
-                  <td className="px-4 lg:px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                      flight.status === 'ACCEPTED' ? 'bg-indigo-400/10 text-indigo-400 border-indigo-400/20' :
-                      flight.status === 'CLEARED' ? 'bg-green-400/10 text-green-400 border-green-400/20' : 
-                      'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'
-                    }`}>
-                      {flight.status}
-                    </span>
-                  </td>
-                  <td className="px-4 lg:px-6 py-4 text-right">
-                    <button onClick={() => onView(flight)} className="text-sm text-blue-400 font-medium bg-blue-500/10 px-3 py-1.5 rounded transition-all opacity-80 hover:opacity-100 hover:bg-blue-500/20 whitespace-nowrap">
-                      開啟計畫 &rarr;
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   );
@@ -1365,6 +953,651 @@ function SettingsModal({ settings, onSave, onClose }) {
   );
 }
 
+function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, setRoutes }) {
+  const [activeTab, setActiveTab] = useState('route');
+  
+  const [acftForm, setAcftForm] = useState({ registration: '', type: '', airline: '' });
+  const handleAcftSubmit = (e) => {
+    e.preventDefault();
+    if (acftForm.registration && acftForm.type) {
+      setAircrafts([...aircrafts, { ...acftForm, registration: acftForm.registration.toUpperCase(), airline: acftForm.airline.toUpperCase() }]);
+      setAcftForm({ registration: '', type: '', airline: '' });
+    }
+  };
+
+  const [aptForm, setAptForm] = useState({ icao: '', name: '' });
+  const handleAptSubmit = (e) => {
+    e.preventDefault();
+    if (aptForm.icao && aptForm.name) {
+      setAirports([...airports, { ...aptForm, icao: aptForm.icao.toUpperCase(), name: aptForm.name.toUpperCase() }]);
+      setAptForm({ icao: '', name: '' });
+    }
+  };
+
+  const [editingRouteId, setEditingRouteId] = useState(null);
+
+  const [rtForm, setRtForm] = useState({
+    dep: '', arr: '', acftType: '', distance: '', blockTime: '', atcRoute: '',
+    altn1Apt: '', altn2Apt: '', altn3Apt: '',
+    trip: '', altn1: '', altn2: '', altn3: '', finres: '', cont: '', taxi: '', extra: ''
+  });
+
+  const handleRtFormChange = (e) => {
+    let { name, value } = e.target;
+    if (name === 'atcRoute') value = value.toUpperCase();
+    
+    if (value === 'NONE') {
+      value = '';
+    }
+
+    setRtForm(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === 'altn1Apt') next.altn1 = '';
+      if (name === 'altn2Apt') next.altn2 = '';
+      if (name === 'altn3Apt') next.altn3 = '';
+      return next;
+    });
+  };
+
+  const handleRtSubmit = (e) => {
+    e.preventDefault();
+    if (rtForm.dep && rtForm.arr && rtForm.altn1Apt && rtForm.acftType) {
+      const newRouteData = {
+        ...rtForm, 
+        distance: Number(rtForm.distance) || 0,
+        blockTime: Number(rtForm.blockTime) || 0,
+        atcRoute: rtForm.atcRoute.toUpperCase(),
+        trip: Number(rtForm.trip) || 0,
+        altn1: Number(rtForm.altn1) || 0,
+        altn2: Number(rtForm.altn2) || 0,
+        altn3: Number(rtForm.altn3) || 0,
+        finres: Number(rtForm.finres) || 0,
+        cont: Number(rtForm.cont) || 0,
+        taxi: Number(rtForm.taxi) || 0,
+        extra: Number(rtForm.extra) || 0
+      };
+
+      if (editingRouteId) {
+        setRoutes(routes.map(r => r.id === editingRouteId ? { ...newRouteData, id: editingRouteId } : r));
+        setEditingRouteId(null);
+      } else {
+        setRoutes([...routes, { ...newRouteData, id: Date.now().toString() }]);
+      }
+      
+      setRtForm({ 
+        dep: '', arr: '', acftType: '', distance: '', blockTime: '', atcRoute: '', 
+        altn1Apt: '', altn2Apt: '', altn3Apt: '', 
+        trip: '', altn1: '', altn2: '', altn3: '', finres: '', cont: '', taxi: '', extra: '' 
+      });
+    }
+  };
+
+  const handleEditRoute = (rt) => {
+    setEditingRouteId(rt.id);
+    setRtForm({
+      dep: rt.dep, arr: rt.arr, acftType: rt.acftType, distance: rt.distance, blockTime: rt.blockTime || '', atcRoute: rt.atcRoute,
+      altn1Apt: rt.altn1Apt || '', altn2Apt: rt.altn2Apt || '', altn3Apt: rt.altn3Apt || '',
+      trip: rt.trip, altn1: rt.altn1 || '', altn2: rt.altn2 || '', altn3: rt.altn3 || '', 
+      finres: rt.finres, cont: rt.cont, taxi: rt.taxi, extra: rt.extra
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRouteId(null);
+    setRtForm({ 
+      dep: '', arr: '', acftType: '', distance: '', blockTime: '', atcRoute: '', 
+      altn1Apt: '', altn2Apt: '', altn3Apt: '', 
+      trip: '', altn1: '', altn2: '', altn3: '', finres: '', cont: '', taxi: '', extra: '' 
+    });
+  };
+
+  const uniqueAcftTypes = [...new Set(aircrafts.map(a => a.type))];
+  const aptOptions = airports.map(a => ({ value: a.icao, label: `${a.icao} - ${a.name}` }));
+  const acftTypeOptions = uniqueAcftTypes.map(t => ({ value: t, label: t }));
+  
+  const altnOptionsWithNone = [...aptOptions, { value: 'NONE', label: 'NONE (無)' }];
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex gap-2 p-1 bg-slate-950 rounded-lg border border-slate-800 w-fit overflow-x-auto custom-scrollbar max-w-full">
+        <button onClick={() => setActiveTab('aircraft')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'aircraft' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>機隊管理 (Aircrafts)</button>
+        <button onClick={() => setActiveTab('airport')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'airport' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>機場管理 (Airports)</button>
+        <button onClick={() => setActiveTab('route')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'route' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>航線與燃油 (Routes & Fuel)</button>
+      </div>
+
+      {activeTab === 'aircraft' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-lg h-fit">
+            <h3 className="font-semibold text-slate-200 mb-4 border-b border-slate-800 pb-2">新增航機 (Add Aircraft)</h3>
+            <form onSubmit={handleAcftSubmit} className="space-y-4">
+              <FormInput label="註冊編號 (Registration)" name="registration" value={acftForm.registration} onChange={e => setAcftForm({...acftForm, registration: e.target.value})} placeholder="e.g. B-16722" required />
+              <FormInput label="機型 (Type)" name="type" value={acftForm.type} onChange={e => setAcftForm({...acftForm, type: e.target.value})} placeholder="e.g. B777-300ER" required />
+              <FormInput label="航空公司 (Airline)" name="airline" value={acftForm.airline} onChange={e => setAcftForm({...acftForm, airline: e.target.value})} placeholder="e.g. BR" required />
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md text-sm font-medium transition-colors">加入資料庫</button>
+            </form>
+          </div>
+          <div className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col max-h-[600px]">
+            <div className="overflow-x-auto overflow-y-auto custom-scrollbar">
+              <table className="w-full text-left min-w-[500px]">
+                <thead>
+                  <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider sticky top-0 z-10">
+                    <th className="px-5 py-3">註冊編號</th>
+                    <th className="px-5 py-3">機型</th>
+                    <th className="px-5 py-3">航空公司</th>
+                    <th className="px-5 py-3 text-right">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {aircrafts.map((acft, idx) => (
+                    <tr key={idx} className="hover:bg-slate-900/50">
+                      <td className="px-5 py-3 font-mono font-bold text-slate-200">{acft.registration}</td>
+                      <td className="px-5 py-3 text-sm text-slate-300">{acft.type}</td>
+                      <td className="px-5 py-3 text-sm text-slate-400">{acft.airline}</td>
+                      <td className="px-5 py-3 text-right">
+                        <button onClick={() => setAircrafts(aircrafts.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-300 p-1"><Trash2 className="w-4 h-4"/></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'airport' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-lg h-fit">
+            <h3 className="font-semibold text-slate-200 mb-4 border-b border-slate-800 pb-2">新增機場 (Add Airport)</h3>
+            <form onSubmit={handleAptSubmit} className="space-y-4">
+              <FormInput label="ICAO 代碼" name="icao" value={aptForm.icao} onChange={e => setAptForm({...aptForm, icao: e.target.value})} placeholder="e.g. RCTP" required />
+              <FormInput label="機場名稱 (Name)" name="name" value={aptForm.name} onChange={e => setAptForm({...aptForm, name: e.target.value})} placeholder="e.g. TAIPEI TAOYUAN" required />
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md text-sm font-medium transition-colors">加入資料庫</button>
+            </form>
+          </div>
+          <div className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col max-h-[600px]">
+            <div className="overflow-x-auto overflow-y-auto custom-scrollbar">
+              <table className="w-full text-left min-w-[500px]">
+                <thead>
+                  <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider sticky top-0 z-10">
+                    <th className="px-5 py-3">ICAO</th>
+                    <th className="px-5 py-3">機場名稱</th>
+                    <th className="px-5 py-3 text-right">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {airports.map((apt, idx) => (
+                    <tr key={idx} className="hover:bg-slate-900/50">
+                      <td className="px-5 py-3 font-mono font-bold text-slate-200">{apt.icao}</td>
+                      <td className="px-5 py-3 text-sm text-slate-300">{apt.name}</td>
+                      <td className="px-5 py-3 text-right">
+                        <button onClick={() => setAirports(airports.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-300 p-1"><Trash2 className="w-4 h-4"/></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'route' && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-lg h-fit max-h-[850px] overflow-y-auto custom-scrollbar">
+            <h3 className="font-semibold text-slate-200 mb-4 border-b border-slate-800 pb-2">
+              {editingRouteId ? '編輯航線 (Edit Route)' : '新增航線 (Add Route)'}
+            </h3>
+            <form onSubmit={handleRtSubmit}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <FormSelect label="起飛 (DEP)*" name="dep" value={rtForm.dep} onChange={handleRtFormChange} options={aptOptions} defaultOption="-- DEP --" required />
+                  <FormSelect label="降落 (ARR)*" name="arr" value={rtForm.arr} onChange={handleRtFormChange} options={aptOptions} defaultOption="-- ARR --" required />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <FormSelect label="適用機型 (Type)*" name="acftType" value={rtForm.acftType} onChange={handleRtFormChange} options={acftTypeOptions} defaultOption="-- TYPE --" required />
+                  <FormInput label="距離 (NM)" name="distance" value={rtForm.distance} onChange={handleRtFormChange} placeholder="e.g. 6800" type="number" />
+                  <FormInput label="時間 (分鐘)" name="blockTime" value={rtForm.blockTime} onChange={handleRtFormChange} placeholder="e.g. 870" type="number" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <FormSelect label="備降1 (ALTN1)*" name="altn1Apt" value={rtForm.altn1Apt} onChange={handleRtFormChange} options={aptOptions} defaultOption="-- ALTN1 --" required />
+                  <FormSelect label="備降2 (ALTN2)" name="altn2Apt" value={rtForm.altn2Apt} onChange={handleRtFormChange} options={altnOptionsWithNone} defaultOption="-- ALTN2 --" />
+                  <FormSelect label="備降3 (ALTN3)" name="altn3Apt" value={rtForm.altn3Apt} onChange={handleRtFormChange} options={altnOptionsWithNone} defaultOption="-- ALTN3 --" />
+                </div>
+              </div>
+
+              <div className="w-full mt-3 mb-2">
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">ATC 航路 (ATC Route)</label>
+                <textarea name="atcRoute" value={rtForm.atcRoute} onChange={handleRtFormChange} rows="2" className="w-full bg-slate-900 border border-slate-700 rounded-md p-2.5 text-slate-200 text-sm font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-shadow custom-scrollbar resize-y" placeholder="SID WAYPOINT AWY WAYPOINT STAR..." />
+              </div>
+              
+              <h4 className="text-xs font-semibold text-slate-400 border-b border-slate-800 pb-1 mt-4 mb-2">預設燃油資料 Default Fuel (KGS)</h4>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                <FormInput label="TRIP FUEL" name="trip" value={rtForm.trip} onChange={handleRtFormChange} type="number" />
+                <FormInput label="FINAL RES" name="finres" value={rtForm.finres} onChange={handleRtFormChange} type="number" />
+                <FormInput label="CONT FUEL" name="cont" value={rtForm.cont} onChange={handleRtFormChange} type="number" />
+                <FormInput label="ALTN1 FUEL*" name="altn1" value={rtForm.altn1} onChange={handleRtFormChange} type="number" required />
+                <FormInput label="ALTN2 FUEL" name="altn2" value={rtForm.altn2} onChange={handleRtFormChange} type="number" />
+                <FormInput label="ALTN3 FUEL" name="altn3" value={rtForm.altn3} onChange={handleRtFormChange} type="number" />
+                <FormInput label="TAXI FUEL" name="taxi" value={rtForm.taxi} onChange={handleRtFormChange} type="number" />
+                <FormInput label="EXTRA FUEL" name="extra" value={rtForm.extra} onChange={handleRtFormChange} type="number" />
+              </div>
+              <p className="text-[10px] text-slate-500 mt-2">* 總油量與備降油量等計算，將於「建立飛行計畫」階段動態產生。</p>
+
+              <div className="flex gap-2 mt-4">
+                <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md text-sm font-medium transition-colors">
+                  {editingRouteId ? '儲存修改' : '加入航線資料庫'}
+                </button>
+                {editingRouteId && (
+                  <button type="button" onClick={handleCancelEdit} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md text-sm font-medium transition-colors">
+                    取消
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+          
+          <div className="xl:col-span-2 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col max-h-[850px]">
+            <div className="overflow-x-auto overflow-y-auto custom-scrollbar">
+              <table className="w-full text-left min-w-[850px]">
+                <thead>
+                  <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider sticky top-0 z-10">
+                    <th className="px-4 py-3">航線 (Route)</th>
+                    <th className="px-4 py-3">機型 (Type)</th>
+                    <th className="px-4 py-3">Block Time</th>
+                    <th className="px-4 py-3">ATC 航路</th>
+                    <th className="px-4 py-3">預設 ALTN</th>
+                    <th className="px-4 py-3 text-right">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {routes.map((rt) => (
+                    <tr key={rt.id} className="hover:bg-slate-900/50">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 font-mono font-bold text-slate-200">
+                          <span>{rt.dep}</span>
+                          <ChevronRight className="w-3 h-3 text-slate-600" />
+                          <span>{rt.arr}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-300">{rt.acftType}</td>
+                      <td className="px-4 py-3 text-sm text-slate-400">{rt.blockTime ? `${rt.blockTime}m` : '-'}</td>
+                      <td className="px-4 py-3 text-xs text-slate-400 font-mono truncate max-w-[200px]" title={rt.atcRoute}>{rt.atcRoute}</td>
+                      <td className="px-4 py-3">
+                         <div className="flex flex-col text-xs font-mono text-yellow-400">
+                           {rt.altn1Apt && <span>1: {rt.altn1Apt} ({rt.altn1})</span>}
+                           {rt.altn2Apt && <span>2: {rt.altn2Apt} ({rt.altn2})</span>}
+                           {rt.altn3Apt && <span>3: {rt.altn3Apt} ({rt.altn3})</span>}
+                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <button onClick={() => handleEditRoute(rt)} className="text-blue-400 hover:text-blue-300 p-1.5 mr-1 bg-blue-500/10 rounded" title="編輯航線"><Edit className="w-4 h-4"/></button>
+                        <button onClick={() => setRoutes(routes.filter(r => r.id !== rt.id))} className="text-red-400 hover:text-red-300 p-1.5 bg-red-500/10 rounded" title="刪除"><Trash2 className="w-4 h-4"/></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
+  const [formData, setFormData] = useState({
+    callsign: '', airline: '', aircraft: '', registration: '',
+    date: new Date().toISOString().split('T')[0],
+    dep: '', arr: '', std: '', sta: '', route: '', zfw: '', payload: '',
+    altn1: '', altn2: '', altn3: '',
+    trip: '', altn1Fuel: '', altn2Fuel: '', altn3Fuel: '', finres: '', cont: '', taxi: '', extra: '',
+    remarks: 'NIL SIG WX ENROUTE.',
+    ddItems: 'NIL'
+  });
+
+  const matchingRoute = useMemo(() => {
+    return routes.find(r => 
+      r.dep === formData.dep && 
+      r.arr === formData.arr && 
+      r.acftType === formData.aircraft
+    );
+  }, [routes, formData.dep, formData.arr, formData.aircraft]);
+
+  // 根據匹配的航線，動態產生允許的備降場清單
+  const baseAltnOptions = useMemo(() => {
+    const allOptions = airports.map(a => ({ value: a.icao, label: `${a.icao} - ${a.name}` }));
+    if (matchingRoute) {
+      const allowedApts = [matchingRoute.altn1Apt, matchingRoute.altn2Apt, matchingRoute.altn3Apt].filter(Boolean);
+      return allOptions.filter(opt => allowedApts.includes(opt.value));
+    }
+    return allOptions;
+  }, [airports, matchingRoute]);
+
+  // 產生互斥的選項清單 (防止重複選擇)
+  const getOptionsWithDisabled = (otherVal1, otherVal2, allowNone) => {
+    let opts = baseAltnOptions.map(opt => ({
+      ...opt,
+      disabled: (opt.value === otherVal1 && otherVal1 !== '') || (opt.value === otherVal2 && otherVal2 !== '')
+    }));
+    if (allowNone) {
+      opts.push({ value: 'NONE', label: 'NONE (無)', disabled: false });
+    }
+    return opts;
+  };
+
+  const altn1Options = getOptionsWithDisabled(formData.altn2, formData.altn3, false);
+  const altn2Options = getOptionsWithDisabled(formData.altn1, formData.altn3, true);
+  const altn3Options = getOptionsWithDisabled(formData.altn1, formData.altn2, true);
+
+  const handleChange = (e) => {
+    let { name, value } = e.target;
+    
+    if (name === 'std' || name === 'sta') {
+      let val = value.toUpperCase().replace(/[^0-9Z:]/g, '');
+      let rawNums = val.replace(/[^0-9]/g, '');
+
+      if (rawNums.length >= 4) {
+        let zPart = val.includes('Z') ? 'Z' : '';
+        value = rawNums.slice(0, 2) + ':' + rawNums.slice(2, 4) + zPart;
+      } else {
+        value = val;
+      }
+
+      // ★ 判斷是否滿足觸發條件：編輯的是 Block Out (std) 且航線中有 Block Time 設定
+      if (name === 'std' && rawNums.length >= 4 && matchingRoute && matchingRoute.blockTime) {
+         const newSta = calculateBlockIn(value, matchingRoute.blockTime);
+         setFormData(prev => ({ ...prev, std: value, sta: newSta }));
+         return; // 因為我們在裡面 setState 了，直接 return 避免再次執行下面的 setState
+      }
+
+    } else if (name !== 'date' && name !== 'remarks' && name !== 'ddItems') {
+      value = value.toUpperCase();
+    }
+    
+    // 動態尋找對應的備降場油量，並處理 NONE 的清空邏輯
+    if (['altn1', 'altn2', 'altn3'].includes(name)) {
+      let fuelName = `${name}Fuel`;
+      let fuelValue = '';
+      
+      if (value === 'NONE') {
+        value = ''; 
+        fuelValue = '';
+      } else {
+        if (matchingRoute) {
+          if (value === matchingRoute.altn1Apt) fuelValue = matchingRoute.altn1;
+          else if (value === matchingRoute.altn2Apt) fuelValue = matchingRoute.altn2;
+          else if (value === matchingRoute.altn3Apt) fuelValue = matchingRoute.altn3;
+          else fuelValue = value ? 2500 : ''; // 預設值
+        } else {
+          fuelValue = value ? 2500 : '';
+        }
+      }
+
+      setFormData(prev => ({ ...prev, [name]: value, [fuelName]: fuelValue }));
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAircraftChange = (e) => {
+    const reg = e.target.value;
+    const selectedAcft = aircrafts.find(a => a.registration === reg);
+    if (selectedAcft) {
+      setFormData(prev => ({
+        ...prev,
+        registration: selectedAcft.registration,
+        aircraft: selectedAcft.type,
+        airline: selectedAcft.airline
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, registration: reg }));
+    }
+  };
+
+  // 當航線匹配時，強制洗掉舊資料並套用航線資料庫設定
+  useEffect(() => {
+    if (matchingRoute) {
+      setFormData(prev => {
+        let updatedSta = prev.sta;
+        // 若航線切換成功時，Block Out 已填入且有 Block Time，就順手算一下 Block In 帶入
+        if (prev.std && prev.std.length >= 5 && matchingRoute.blockTime) {
+          updatedSta = calculateBlockIn(prev.std, matchingRoute.blockTime);
+        }
+
+        return { 
+          ...prev, 
+          route: prev.route || matchingRoute.atcRoute || '',
+          altn1: prev.altn1 || matchingRoute.altn1Apt || '',
+          altn2: prev.altn2 || matchingRoute.altn2Apt || '',
+          altn3: prev.altn3 || matchingRoute.altn3Apt || '',
+          trip: prev.trip || matchingRoute.trip || '',
+          altn1Fuel: prev.altn1Fuel || matchingRoute.altn1 || '',
+          altn2Fuel: prev.altn2Fuel || matchingRoute.altn2 || '',
+          altn3Fuel: prev.altn3Fuel || matchingRoute.altn3 || '',
+          finres: prev.finres || matchingRoute.finres || '',
+          cont: prev.cont || matchingRoute.cont || '',
+          taxi: prev.taxi || matchingRoute.taxi || '',
+          extra: prev.extra || matchingRoute.extra || '',
+          sta: updatedSta
+        };
+      });
+    }
+  }, [matchingRoute]);
+
+  // 動態計算油量 (依據當前表單輸入值)
+  const zfwNum = parseInt(formData.zfw) || 60000;
+  const tF = parseInt(formData.trip) || Math.floor(zfwNum * 0.15); 
+  const a1F = parseInt(formData.altn1Fuel) || 0; // ALTN1 作為基礎計算標準
+  const cF = parseInt(formData.cont) || Math.floor(tF * 0.05);
+  const frF = parseInt(formData.finres) || 1500;
+  const txF = parseInt(formData.taxi) || 300;
+  const exF = parseInt(formData.extra) || 0;
+  
+  const minFuel = tF + a1F + frF + cF + txF;
+  const minDivFuel = a1F + frF + 50;
+  const rampFuel = minFuel + exF;
+  const totalFuel = rampFuel; 
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const newFlight = {
+      ...formData,
+      status: 'PREFLIGHT',
+      dispatcherSign: null, captainSign: null,
+      weights: { zfw: zfwNum, payload: parseInt(formData.payload) || 15000, tow: zfwNum + totalFuel, law: zfwNum + totalFuel - tF },
+      fuel: { trip: tF, cont: cF, altn1: a1F, altn2: parseInt(formData.altn2Fuel)||0, altn3: parseInt(formData.altn3Fuel)||0, finres: frF, extra: exF, taxi: txF }
+    };
+    onSubmit(newFlight);
+  };
+
+  const aptOptions = airports.map(a => ({ value: a.icao, label: `${a.icao} - ${a.name}` }));
+
+  return (
+    <div className="max-w-5xl mx-auto pb-10 w-full">
+      <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-xl w-full">
+        <div className="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-4 flex items-center gap-3">
+          <Settings className="w-5 h-5 text-blue-400 shrink-0" />
+          <h3 className="font-semibold text-lg text-slate-100">建立新營運飛行計畫 (Generate New OFP)</h3>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-8">
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-slate-400 border-b border-slate-800 pb-2 uppercase tracking-wider flex items-center gap-2"><Info className="w-4 h-4"/> Flight Information</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <FormInput label="航班號 (Callsign)" name="callsign" value={formData.callsign} onChange={handleChange} placeholder="e.g. CAL101" required />
+              
+              <FormSelect 
+                label="註冊編號 (Registration)" 
+                name="registration" 
+                value={formData.registration} 
+                onChange={handleAircraftChange} 
+                options={aircrafts.map(a => ({ value: a.registration, label: `${a.registration} (${a.type})` }))}
+                defaultOption="-- 選擇航機 --"
+                required
+              />
+
+              <FormInput label="機型 (Aircraft)" name="aircraft" value={formData.aircraft} onChange={handleChange} placeholder="Auto-filled" readonly />
+              <FormInput label="航空公司 (Airline)" name="airline" value={formData.airline} onChange={handleChange} placeholder="Auto-filled" readonly />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-slate-400 border-b border-slate-800 pb-2 uppercase tracking-wider flex items-center gap-2"><Map className="w-4 h-4"/> Routing & Schedule</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6">
+              <div className="lg:col-span-2">
+                <FormInput label="預計起飛日期 (Date)" name="date" value={formData.date} onChange={handleChange} type="date" required />
+              </div>
+              <FormSelect 
+                label="起飛機場 (DEP)" name="dep" value={formData.dep} onChange={handleChange} 
+                options={aptOptions} defaultOption="-- DEP --" required
+              />
+              <FormSelect 
+                label="降落機場 (ARR)" name="arr" value={formData.arr} onChange={handleChange} 
+                options={aptOptions} defaultOption="-- ARR --" required
+              />
+              <FormInput label="Block Out Time (Z)" name="std" value={formData.std} onChange={handleChange} placeholder="HH:MMZ" required />
+              <FormInput label="Block In Time (Z)" name="sta" value={formData.sta} onChange={handleChange} placeholder="HH:MM" required />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-4">
+              <FormSelect label="備降機場1 (ALTN1)*" name="altn1" value={formData.altn1} onChange={handleChange} options={altn1Options} defaultOption="-- ALTN1 --" required />
+              <FormSelect label="備降機場2 (ALTN2)" name="altn2" value={formData.altn2} onChange={handleChange} options={altn2Options} defaultOption="-- ALTN2 --" />
+              <FormSelect label="備降機場3 (ALTN3)" name="altn3" value={formData.altn3} onChange={handleChange} options={altn3Options} defaultOption="-- ALTN3 --" />
+            </div>
+
+            <div className="w-full mt-4">
+              <label className="block text-xs font-medium text-slate-400 mb-1.5">ATC 航路 (ATC Route)</label>
+              <textarea name="route" value={formData.route} onChange={handleChange} rows="2" className="w-full bg-slate-900 border border-slate-700 rounded-md p-3 text-slate-200 text-sm font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-shadow custom-scrollbar resize-y" placeholder="SID WAYPOINT AWY WAYPOINT STAR..." />
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-slate-400 border-b border-slate-800 pb-2 uppercase tracking-wider">Dynamic Fuel Calculation (KGS)</h4>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <FormInput label="預估無油重量 (Est. ZFW)" name="zfw" value={formData.zfw} onChange={handleChange} placeholder="e.g. 62000" type="number" />
+              <FormInput label="預估商載 (Est. Payload)" name="payload" value={formData.payload} onChange={handleChange} placeholder="e.g. 15000" type="number" />
+              <div className="lg:col-span-2 flex items-center">
+                 {matchingRoute && (
+                   <span className="text-sm text-green-400 flex items-center gap-2 bg-green-900/20 px-3 py-2 rounded border border-green-800">
+                     <CheckCircle className="w-4 h-4 shrink-0" /> 航線匹配成功！已自動帶入預設油量與航路。
+                   </span>
+                 )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-4 p-4 border border-slate-800 bg-slate-900/50 rounded-lg">
+                <FormInput label="TRIP FUEL" name="trip" value={formData.trip} onChange={handleChange} type="number" required />
+                <FormInput label="ALTN1 FUEL (計算基準)*" name="altn1Fuel" value={formData.altn1Fuel} onChange={handleChange} type="number" required />
+                <FormInput label="ALTN2 FUEL" name="altn2Fuel" value={formData.altn2Fuel} onChange={handleChange} type="number" />
+                <FormInput label="ALTN3 FUEL" name="altn3Fuel" value={formData.altn3Fuel} onChange={handleChange} type="number" />
+                <FormInput label="CONT FUEL" name="cont" value={formData.cont} onChange={handleChange} type="number" required />
+                <FormInput label="FINAL RES" name="finres" value={formData.finres} onChange={handleChange} type="number" required />
+                <FormInput label="TAXI FUEL" name="taxi" value={formData.taxi} onChange={handleChange} type="number" required />
+                <FormInput label="EXTRA FUEL" name="extra" value={formData.extra} onChange={handleChange} type="number" />
+            </div>
+            
+            <div className="bg-blue-950/30 p-4 rounded-lg border border-blue-900/50 flex justify-around flex-wrap gap-4 mt-4">
+               <div className="text-center">
+                 <p className="text-xs text-slate-400 font-medium mb-1">MIN FUEL</p>
+                 <p className="text-xl font-mono text-blue-400 font-bold">{Math.round(minFuel).toLocaleString()}</p>
+               </div>
+               <div className="text-center">
+                 <p className="text-xs text-slate-400 font-medium mb-1">MIN DIV</p>
+                 <p className="text-xl font-mono text-yellow-400 font-bold">{Math.round(minDivFuel).toLocaleString()}</p>
+               </div>
+               <div className="text-center">
+                 <p className="text-xs text-slate-400 font-medium mb-1">RAMP FUEL (BLOCK)</p>
+                 <p className="text-2xl font-mono text-green-400 font-bold">{Math.round(rampFuel).toLocaleString()}</p>
+               </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-slate-800">
+            <button type="button" onClick={onCancel} className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-white bg-slate-800 sm:bg-transparent hover:bg-slate-700 sm:hover:bg-slate-800 rounded-md transition-colors border border-transparent sm:border-slate-700">取消 (Cancel)</button>
+            <button type="submit" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-900/20 border border-blue-500">
+              <CheckCircle className="w-4 h-4" /> 產生飛行計畫 (Generate OFP)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function DashboardView({ flights, onView }) {
+  return (
+    <div className="space-y-6 w-full max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        <StatusCard title="總監控航班 (Total)" value={flights.length.toString()} color="text-blue-400" />
+        <StatusCard title="已放行 (Disp. Cleared)" value={flights.filter(f => f.status === 'CLEARED' || f.status === 'ACCEPTED').length.toString()} color="text-green-400" />
+        <StatusCard title="機長已確認 (Capt. Accepted)" value={flights.filter(f => f.status === 'ACCEPTED').length.toString()} color="text-indigo-400" />
+      </div>
+
+      <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col w-full">
+        <div className="px-4 lg:px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+          <h3 className="font-semibold text-slate-200">當前航班清單 (Active Flights)</h3>
+        </div>
+        <div className="overflow-x-auto custom-scrollbar w-full">
+          <table className="w-full text-left border-collapse min-w-[700px]">
+            <thead>
+              <tr className="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                <th className="px-4 lg:px-6 py-4 font-medium">航班號</th>
+                <th className="px-4 lg:px-6 py-4 font-medium">航機</th>
+                <th className="px-4 lg:px-6 py-4 font-medium">航線</th>
+                <th className="px-4 lg:px-6 py-4 font-medium">Block Out</th>
+                <th className="px-4 lg:px-6 py-4 font-medium">狀態</th>
+                <th className="px-4 lg:px-6 py-4 font-medium text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {flights.map((flight) => (
+                <tr key={flight.id} className="hover:bg-slate-800/50 transition-colors group">
+                  <td className="px-4 lg:px-6 py-4">
+                    <div className="font-bold text-slate-200">{flight.callsign}</div>
+                    <div className="text-xs text-slate-500">{flight.airline}</div>
+                  </td>
+                  <td className="px-4 lg:px-6 py-4">
+                    <div className="text-sm text-slate-300">{flight.aircraft}</div>
+                    <div className="text-xs text-slate-500">{flight.registration}</div>
+                  </td>
+                  <td className="px-4 lg:px-6 py-4">
+                    <div className="flex items-center gap-2 text-sm text-slate-300 font-mono">
+                      <span>{flight.dep}</span>
+                      <ChevronRight className="w-3 h-3 text-slate-600" />
+                      <span>{flight.arr}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 lg:px-6 py-4">
+                    <div className="text-sm text-slate-300 font-mono">{flight.std}</div>
+                  </td>
+                  <td className="px-4 lg:px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                      flight.status === 'ACCEPTED' ? 'bg-indigo-400/10 text-indigo-400 border-indigo-400/20' :
+                      flight.status === 'CLEARED' ? 'bg-green-400/10 text-green-400 border-green-400/20' : 
+                      'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'
+                    }`}>
+                      {flight.status}
+                    </span>
+                  </td>
+                  <td className="px-4 lg:px-6 py-4 text-right">
+                    <button onClick={() => onView(flight)} className="text-sm text-blue-400 font-medium bg-blue-500/10 px-3 py-1.5 rounded transition-all opacity-80 hover:opacity-100 hover:bg-blue-500/20 whitespace-nowrap">
+                      開啟計畫 &rarr;
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSettings }) {
   const [aiReport, setAiReport] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -1379,7 +1612,7 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
   
   const f = flight.fuel;
   const w = flight.weights;
-  const blockFuel = f.trip + f.cont + f.altn + f.finres + f.extra + f.taxi;
+  const blockFuel = f.trip + f.cont + f.altn1 + f.finres + f.extra + f.taxi;
   const takeoffFuel = blockFuel - f.taxi;
 
   let formattedRoute = flight.route.trim();
@@ -1417,7 +1650,6 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
     };
   }, [flight.date, flight.std]);
 
-  // ★ AI 分析產生功能
   const generateAIBriefing = async () => {
     if (!appSettings.geminiApiKey) {
       setAiError("⚠ 請先點擊右上角「齒輪圖示 (系統設定)」，輸入您的 Gemini API Key 以啟用分析功能。");
@@ -1427,21 +1659,27 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
     setAiLoading(true);
     setAiError(null);
     
+    const altnsList = [flight.altn1, flight.altn2, flight.altn3].filter(Boolean).join(', ');
+    
     try {
       const prompt = `請扮演資深的航空簽派員，根據以下營運飛行計畫(OFP)資料，產生一份給飛行員的「航班風險與注意事項簡報」。
 要求：
 1. 請以「繁體中文」輸出，排版使用 Markdown 條列式，重點清晰、語氣專業。
 2. 內容需包含：油量充裕度評估、機況限制評估、航路潛在風險、起降場/備降場注意事項。
+3. 【重要時間轉換】：飛行計畫中的 Block Out 與 Block In 時間均為 ZULU Time (UTC)。在評估日夜間操作風險或機場起降時間限制時，請務必先自行將 ZULU Time 轉換為該機場的 Local Time（當地時間）。例如從台灣 (UTC+8) 23:35Z 起飛，當地時間為隔日上午 07:35，屬於日間操作，切勿當作深夜航班評估。
 
 【航班基礎資訊】
 - 航班：${flight.callsign} (機型：${flight.aircraft} / ${flight.registration})
 - 航線：${flight.dep} 飛往 ${flight.arr}
-- 備降場：${flight.altn}
-- 預計起飛時間(STD)：${flight.std}
+- 備降場列表：${altnsList || '無'}
+- Block Out Time (Z)：${flight.std}
+- Block In Time (Z)：${flight.sta}
 
 【油量規劃 (KGS)】
 - 航程油量 (Trip Fuel)：${f.trip}
-- 備降油量 (Altn Fuel)：${f.altn}
+- 備降場1 (${flight.altn1}) 油量：${f.altn1}
+${flight.altn2 ? `- 備降場2 (${flight.altn2}) 油量：${f.altn2}` : ''}
+${flight.altn3 ? `- 備降場3 (${flight.altn3}) 油量：${f.altn3}` : ''}
 - 最低起飛油量 (Min Takeoff)：${takeoffFuel}
 - 額外添加 (Extra Fuel)：${f.extra}
 
@@ -1454,6 +1692,11 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
 - ATC Route：${formattedRoute}
 - Dispatcher Remarks：${flight.remarks || 'NIL'}
 `;
+
+      // ★ 在主控台顯示送給 AI 的 Prompt
+      console.group("🤖 [AI 智能分析] 傳送給 Gemini 的 Prompt 內容：");
+      console.log(prompt);
+      console.groupEnd();
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${appSettings.aiModel}:generateContent?key=${appSettings.geminiApiKey}`, {
         method: 'POST',
@@ -1515,9 +1758,8 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
               <p>ACFT: {flight.aircraft}      REG: {flight.registration}</p>
            </div>
            <div className="md:text-right space-y-1 bg-slate-900/50 print:bg-transparent p-3 md:p-0 rounded-md">
-              <p>DEP: <span className="text-green-400 print:text-green-800 font-bold">{flight.dep}</span>  STD: {flight.std}</p>
-              <p>ARR: <span className="text-green-400 print:text-green-800 font-bold">{flight.arr}</span>  STA: {flight.sta}</p>
-              <p>ALT: <span className="text-yellow-400 print:text-black font-bold">{flight.altn}</span></p>
+              <p>DEP: <span className="text-green-400 print:text-green-800 font-bold">{flight.dep}</span>  BLK OUT: {flight.std}</p>
+              <p>ARR: <span className="text-green-400 print:text-green-800 font-bold">{flight.arr}</span>  BLK IN: {flight.sta}</p>
            </div>
         </div>
 
@@ -1527,7 +1769,9 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
              <div className="space-y-1.5">
                 <FuelRow label="TRIP FUEL" value={f.trip} />
                 <FuelRow label="CONT 5%" value={f.cont} />
-                <FuelRow label="ALTN FUEL" value={f.altn} />
+                <FuelRow label={`ALTN1 (${flight.altn1})`} value={f.altn1} />
+                {flight.altn2 && f.altn2 > 0 && <FuelRow label={`ALTN2 (${flight.altn2})`} value={f.altn2} />}
+                {flight.altn3 && f.altn3 > 0 && <FuelRow label={`ALTN3 (${flight.altn3})`} value={f.altn3} />}
                 <FuelRow label="FINAL RES" value={f.finres} />
                 <div className="border-t border-dashed border-slate-600 print:border-black my-2"></div>
                 <FuelRow label="MIN TAKEOFF" value={takeoffFuel} bold isBlue textLarge/>
@@ -1548,7 +1792,6 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
                 <WtRow label="EST LAW" value={w.law} textLarge />
              </div>
              
-             {/* ★ 開放 Dispatcher 編輯 Remarks */}
              <div className="mt-6 bg-slate-900/80 print:bg-gray-100 p-3 sm:p-4 border border-slate-700 print:border-gray-400 rounded-md">
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-xs text-slate-500 print:text-gray-600">DISPATCHER REMARKS:</p>
@@ -1597,14 +1840,18 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
                 <p className="text-slate-400 print:text-black mt-1.5">{mockWeather(flight.arr)?.metar}</p>
                 <p className="text-slate-400 print:text-black mt-0.5">{mockWeather(flight.arr)?.taf}</p>
               </div>
-              {flight.altn && (
-                <div className="border-t border-slate-700 print:border-gray-300 pt-3 break-words">
-                  <span className="inline-block bg-slate-800 print:bg-gray-200 text-slate-300 print:text-gray-700 px-2 py-0.5 rounded text-xs mr-2 font-bold">[ALTN]</span>
-                  <span className="text-yellow-400 print:text-black font-bold text-sm sm:text-base">{flight.altn}</span>
-                  <p className="text-slate-400 print:text-black mt-1.5">METAR {flight.altn} 280700Z 18015G25KT 5000 -RA BR FEW015 BKN030 18/16 Q1008 NOSIG=</p>
-                  <p className="text-slate-400 print:text-black mt-0.5">TAF {flight.altn} 280500Z 2806/0112 19015KT 6000 -RA BKN020 PROB30 TEMPO 2808/2812 3000 TSRA=</p>
-                </div>
-              )}
+              
+              {[flight.altn1, flight.altn2, flight.altn3].map((altnApt, idx) => {
+                 if (!altnApt) return null;
+                 return (
+                   <div key={`altn-${idx}`} className="border-t border-slate-700 print:border-gray-300 pt-3 break-words">
+                     <span className="inline-block bg-slate-800 print:bg-gray-200 text-slate-300 print:text-gray-700 px-2 py-0.5 rounded text-xs mr-2 font-bold">[ALTN {idx+1}]</span>
+                     <span className="text-yellow-400 print:text-black font-bold text-sm sm:text-base">{altnApt}</span>
+                     <p className="text-slate-400 print:text-black mt-1.5">METAR {altnApt} 280700Z 18015G25KT 5000 -RA BR FEW015 BKN030 18/16 Q1008 NOSIG=</p>
+                     <p className="text-slate-400 print:text-black mt-0.5">TAF {altnApt} 280500Z 2806/0112 19015KT 6000 -RA BKN020 PROB30 TEMPO 2808/2812 3000 TSRA=</p>
+                   </div>
+                 );
+              })}
            </div>
         </div>
 
@@ -1613,14 +1860,13 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
              <CloudLightning className="w-4 h-4 print:hidden" /> 5. Enroute Weather Charts
            </h3>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-              <BriefingChart title="SFC-10000FT SIGWX" srcList={sigwxLowList} auth={appSettings} />
-              <BriefingChart title="10000-25000FT SIGWX" srcList={sigwxMidList} auth={appSettings} />
-              <BriefingChart title="SFC-45000FT SIGWX" srcList={sigwxHighList} auth={appSettings} />
+              <BriefingChart title="SFC-10000FT SIGWX" srcList={sigwxLowList} auth={null} />
+              <BriefingChart title="10000-25000FT SIGWX" srcList={sigwxMidList} auth={null} />
+              <BriefingChart title="SFC-45000FT SIGWX" srcList={sigwxHighList} auth={null} />
               <BriefingChart title="TPE AIRMET" srcList={airmetList} auth={appSettings} />
            </div>
         </div>
 
-        {/* ★ 新增：第 6 項 機況 DD Items */}
         <div className="mt-8">
            <h3 className="text-white print:text-black border-b border-slate-600 print:border-black mb-3 pb-1 font-bold uppercase flex items-center gap-2 text-sm sm:text-base">
              <Wrench className="w-4 h-4 print:hidden" /> 6. 機況 DD Items (Deferred Defects)
@@ -1646,7 +1892,6 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
            </div>
         </div>
 
-        {/* ★ 更新：第 7 項 AI 分析功能區塊 */}
         <div className="mt-8 print:break-before-page">
            <h3 className="text-white print:text-black border-b border-slate-600 print:border-black mb-3 pb-1 font-bold uppercase flex items-center gap-2 text-sm sm:text-base">
              <Sparkles className="w-4 h-4 print:hidden text-blue-400" /> 7. AI Flight Briefing Analysis
@@ -1675,7 +1920,6 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
               )}
               {aiReport && (
                   <div className="space-y-4">
-                      {/* Markdown 格式呈現區 */}
                       <div className="text-slate-300 print:text-black whitespace-pre-wrap leading-relaxed font-sans text-[13px] sm:text-sm bg-slate-950/50 print:bg-transparent p-4 rounded-md border border-slate-800/50 print:border-none">
                           {aiReport}
                       </div>
