@@ -3,7 +3,7 @@ import {
   PlaneTakeoff, PlaneLanding, FileText, CloudRain, Clock, 
   Settings, ChevronRight, ChevronLeft, Plus, Map, Info, AlertTriangle, 
   CheckCircle, Navigation, Printer, CloudLightning, RefreshCw, ZoomIn,
-  Menu, X, LogOut, User, KeyRound, ShieldCheck, Plane, Database, Trash2, Edit, Sparkles, Bot, Wrench
+  Menu, X, LogOut, User, KeyRound, ShieldCheck, Plane, Database, Trash2, Edit, Sparkles, Bot, Wrench, ExternalLink
 } from 'lucide-react';
 
 // --- Mock Data ---
@@ -65,14 +65,14 @@ const initialFlights = [
     altn2: 'KEWR',
     altn3: '',
     std: '23:35Z',
-    sta: '14:05Z',
+    sta: '14:05',
     status: 'CLEARED',
     dispatcherSign: 'DP_AUTH_01',
     captainSign: null,
     route: 'SID CHALI M750 ENVAR OTR8 SEALS 50N160E 50N170E 49N180E 47N170W 45N160W 43N150W 40N140W 38N130W 35N120W STAR',
     weights: { zfw: 220500, payload: 52000, tow: 335000, law: 245000 },
     fuel: { trip: 105000, cont: 5250, altn1: 4500, altn2: 4800, altn3: 0, finres: 3200, extra: 2000, taxi: 800 },
-    remarks: 'NIL SIG WX ENROUTE. CHECK NOTAM FOR KJFK RWY CLOSURE.',
+    remarks: 'NIL SIG WX ENROUTE.',
     ddItems: 'NIL'
   },
   {
@@ -88,7 +88,7 @@ const initialFlights = [
     altn2: '',
     altn3: '',
     std: '04:00Z',
-    sta: '05:45Z',
+    sta: '05:45',
     status: 'PREFLIGHT',
     dispatcherSign: null,
     captainSign: null,
@@ -115,7 +115,6 @@ const calculateBlockIn = (stdStr, blockTimeMins) => {
   const newHrs = Math.floor(totalMins / 60) % 24;
   const newMins = totalMins % 60;
   
-  // 移除 Z 尾綴，僅回傳 HH:MM 時間格式
   return `${String(newHrs).padStart(2, '0')}:${String(newMins).padStart(2, '0')}`;
 };
 
@@ -142,50 +141,36 @@ const getDynamicAirmetUrls = (targetDateStr = null, targetHourStr = null) => {
   const now = new Date();
   let targetDate = targetDateStr ? parseTargetDate(targetDateStr, targetHourStr) : now;
 
-  if (targetDate.getTime() > now.getTime() + 4 * 3600 * 1000) {
-    targetDate = new Date(now.getTime() + 4 * 3600 * 1000);
-  }
-
-  const addSequence = (dateObj, count) => {
-    const currentHour = dateObj.getUTCHours();
-    let startHour;
+  const generateForTime = (dateObj, count) => {
+    const hours = dateObj.getUTCHours();
+    let startHour = 21;
     let daysOffset = 0;
 
-    if (currentHour >= 21) { startHour = 21; daysOffset = 0; }
-    else if (currentHour >= 17) { startHour = 17; daysOffset = 0; }
-    else if (currentHour >= 13) { startHour = 13; daysOffset = 0; }
-    else if (currentHour >= 9) { startHour = 9; daysOffset = 0; }
-    else if (currentHour >= 5) { startHour = 5; daysOffset = 0; }
-    else if (currentHour >= 1) { startHour = 1; daysOffset = 0; }
+    if (hours >= 21) { startHour = 21; daysOffset = 0; }
+    else if (hours >= 17) { startHour = 17; daysOffset = 0; }
+    else if (hours >= 13) { startHour = 13; daysOffset = 0; }
+    else if (hours >= 9) { startHour = 9; daysOffset = 0; }
+    else if (hours >= 5) { startHour = 5; daysOffset = 0; }
+    else if (hours >= 1) { startHour = 1; daysOffset = 0; }
     else { startHour = 21; daysOffset = -1; }
 
     const baseDate = new Date(Date.UTC(dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate() + daysOffset, startHour, 0, 0));
-    const startCheckDate = new Date(baseDate.getTime() + 4 * 60 * 60 * 1000);
-
+    
     for (let i = 0; i < count; i++) {
-      const start = new Date(startCheckDate.getTime() - i * 4 * 60 * 60 * 1000);
+      const start = new Date(baseDate.getTime() - i * 4 * 60 * 60 * 1000);
       const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
 
-      const formatDDHHMM = (d) => {
-        const dd = String(d.getUTCDate()).padStart(2, '0');
-        const hh = String(d.getUTCHours()).padStart(2, '0');
-        return `${dd}${hh}00`;
-      };
-
-      const startStr = formatDDHHMM(start);
-      const endStr = formatDDHHMM(end);
+      const startStr = `${String(start.getUTCDate()).padStart(2, '0')}${String(start.getUTCHours()).padStart(2, '0')}00`;
+      const endStr = `${String(end.getUTCDate()).padStart(2, '0')}${String(end.getUTCHours()).padStart(2, '0')}00`;
       
-      urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_06_${startStr}_${endStr}.jpg`);
-      urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_05_${startStr}_${endStr}.jpg`);
-      urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_04_${startStr}_${endStr}.jpg`);
-      urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_03_${startStr}_${endStr}.jpg`);
-      urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_02_${startStr}_${endStr}.jpg`);
-      urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_01_${startStr}_${endStr}.jpg`);
+      for (let j = 6; j >= 1; j--) {
+        urls.push(`https://aoaws.anws.gov.tw/data/tamc/typh/airmet_0${j}_${startStr}_${endStr}.jpg`);
+      }
     }
   };
 
-  addSequence(targetDate, 8); 
-  addSequence(now, 8);
+  generateForTime(targetDate, 2);
+  generateForTime(now, 6);
   
   return [...new Set(urls)];
 };
@@ -195,22 +180,11 @@ const getDynamicSigwxUrls = (basePrefix, targetDateStr = null, targetHourStr = n
   const now = new Date();
   let targetDate = targetDateStr ? parseTargetDate(targetDateStr, targetHourStr) : now;
 
-  const addSequence = (dateObj, count) => {
+  const generateForTime = (dateObj, count) => {
     const hours = dateObj.getUTCHours();
-    const minutes = dateObj.getUTCMinutes();
-    const totalHours = hours + minutes / 60;
-
-    let bestIssueHour = 0;
-    let dayOffset = 0;
-
-    if (totalHours >= 21) { bestIssueHour = 0; dayOffset = 1; }
-    else if (totalHours >= 15) bestIssueHour = 18;
-    else if (totalHours >= 9) bestIssueHour = 12;
-    else if (totalHours >= 3) bestIssueHour = 6;
-    else { bestIssueHour = 0; }
-
+    let bestIssueHour = Math.floor(hours / 6) * 6;
+    
     const validDate = new Date(dateObj.getTime());
-    validDate.setUTCDate(validDate.getUTCDate() + dayOffset);
     validDate.setUTCHours(bestIssueHour, 0, 0, 0);
 
     for (let i = 0; i < count; i++) { 
@@ -224,11 +198,482 @@ const getDynamicSigwxUrls = (basePrefix, targetDateStr = null, targetHourStr = n
     }
   };
 
-  addSequence(targetDate, 4);
-  addSequence(now, 4);
+  generateForTime(targetDate, 2);
+  generateForTime(now, 4);
   
   return [...new Set(urls)];
 };
+
+// --- 模擬飛航公告資料 Helper ---
+const mockNotam = (icao) => {
+  if (!icao) return [];
+  const notams = {
+    'RCTP': [
+      `A0101/26 NOTAMN\nQ) RCAA/QXXXX/IV/NBO/A/000/999/\nA) RCTP\nB) 2602250000 C) 2603312359\nE) TWY NC BETWEEN TWY N4 AND TWY N5 CLSD DUE TO MAINT.`,
+      `A0105/26 NOTAMN\nQ) RCAA/QMRLC/IV/NBO/A/000/999/\nA) RCTP\nB) 2603010000 C) 2603011200\nE) RWY 05L/23R CLSD FOR RUBBER REMOVAL.`,
+      `A0110/26 NOTAMN\nQ) RCAA/QFAXX/IV/NBO/A/000/999/\nA) RCTP\nB) 2602010000 C) 2605010000\nE) BIRD HAZARD REPORTED IN VICINITY OF AD. EXER CTN.`
+    ],
+    'KJFK': [
+      `A1234/26 NOTAMR A1200/26\nQ) KZWY/QMRXX/IV/NBO/A/000/999/\nA) KJFK\nB) 2602201200 C) 2603151200\nE) RWY 04L/22R CLSD FOR WIP.`,
+      `A1240/26 NOTAMN\nQ) KZWY/QXXXX/IV/NBO/A/000/999/\nA) KJFK\nB) 2603010000 C) 2603020000\nE) ILS RWY 13L GLIDE PATH OUT OF SERVICE.`
+    ],
+    'KBOS': [
+      `A0987/26 NOTAMN\nQ) KZBW/QXXXX/IV/NBO/A/000/999/\nA) KBOS\nB) 2603010000 C) 2603052359\nE) ILS RWY 04R U/S.`
+    ],
+    'KEWR': [
+      `A0888/26 NOTAMN\nQ) KZWY/QXXXX/IV/NBO/A/000/999/\nA) KEWR\nB) 2602281000 C) 2603102200\nE) VOR/DME EWR 108.4 UNUSABLE.`
+    ],
+    'VHHH': [
+      `A0505/26 NOTAMN\nQ) VHHK/QXXXX/IV/NBO/A/000/999/\nA) VHHH\nB) 2603010100 C) 2603010500\nE) RWY 07R/25L CLSD DUE TO RUBBER REMOVAL.`,
+      `A0506/26 NOTAMN\nQ) VHHK/QXXXX/IV/NBO/A/000/999/\nA) VHHH\nB) 2603010000 C) 2603022359\nE) TAXIWAY B CLSD FOR ALL ACFT.`
+    ],
+    'VMMC': [
+      `A0202/26 NOTAMN\nQ) VMFC/QXXXX/IV/NBO/A/000/999/\nA) VMMC\nB) 2602260000 C) 2604302359\nE) BIRD CONCENTRATION IN VICINITY OF AD.`
+    ],
+    'RCKH': [
+      `A0303/26 NOTAMN\nQ) RCAA/QXXXX/IV/NBO/A/000/999/\nA) RCKH\nB) 2603010200 C) 2603010600\nE) MIL JET TRAINING ACT WILL TAKE PLACE IN RCR18.`,
+      `A0304/26 NOTAMN\nQ) RCAA/QXXXX/IV/NBO/A/000/999/\nA) RCKH\nB) 2603010000 C) 2603052359\nE) PAPI RWY 09 OUT OF SERVICE.`
+    ],
+    'RCQC': [
+      `A0404/26 NOTAMN\nQ) RCAA/QXXXX/IV/NBO/A/000/999/\nA) RCQC\nB) 2603010000 C) 2605312359\nE) AD OPR HR CHANGED TO 0000-1100 DAILY.`
+    ],
+    'RCMQ': [
+      `A0606/26 NOTAMN\nQ) RCAA/QXXXX/IV/NBO/A/000/999/\nA) RCMQ\nB) 2602280000 C) 2603152359\nE) TWY W CLSD DUE TO CONST.`,
+      `A0607/26 NOTAMN\nQ) RCAA/QXXXX/IV/NBO/A/000/999/\nA) RCMQ\nB) 2603010000 C) 2603152359\nE) VOR/DME TCG 114.0 OUT OF SERVICE.`
+    ],
+    'RCSS': [
+      `A0707/26 NOTAMN\nQ) RCAA/QXXXX/IV/NBO/A/000/999/\nA) RCSS\nB) 2603011400 C) 2603012200\nE) AD CLSD DUE TO CURFEW.`
+    ]
+  };
+  
+  return notams[icao] || [
+    `A0000/26 NOTAMN\nQ) XXXX/QXXXX/IV/NBO/A/000/999/\nA) ${icao}\nB) 2603010000 C) 2612312359\nE) NIL SIG NOTAM.`
+  ];
+};
+
+// --- 輔助 UI 元件 ---
+function NavItem({ icon, label, active, onClick, isSub = false, collapsed = false }) {
+  return (
+    <button onClick={onClick} className={`w-full flex items-center gap-3 py-2.5 rounded-md transition-all group outline-none ${collapsed ? 'md:justify-center px-0 md:px-0 px-3' : 'px-3 justify-start'} ${active ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 border border-transparent'} ${isSub ? 'text-sm py-2' : 'font-medium'}`} title={label}>
+      <div className={`shrink-0 ${active && collapsed ? 'scale-110 transition-transform' : ''}`}>{icon}</div>
+      <span className={`whitespace-nowrap overflow-hidden text-ellipsis text-left flex-1 ${collapsed ? 'md:hidden block' : 'block'}`}>{label}</span>
+    </button>
+  );
+}
+
+function StatusCard({ title, value, color }) {
+  return (
+    <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 lg:p-6 flex flex-col justify-center shadow-md">
+      <h4 className="text-slate-400 text-sm font-medium mb-1 lg:mb-2">{title}</h4>
+      <span className={`text-3xl lg:text-4xl font-bold ${color}`}>{value}</span>
+    </div>
+  );
+}
+
+function FormInput({ label, name, value, onChange, placeholder, type = "text", readonly = false, required = false }) {
+  return (
+    <div className="w-full flex flex-col min-w-0">
+      <label className="block text-xs font-medium text-slate-400 mb-1.5 truncate" title={label}>{label}</label>
+      <input 
+        type={type} 
+        name={name} 
+        value={value} 
+        onChange={onChange} 
+        placeholder={placeholder} 
+        readOnly={readonly}
+        className={`w-full bg-slate-900 border border-slate-700 rounded-md p-2.5 text-slate-200 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-mono placeholder:text-slate-600 transition-colors ${type === 'date' ? '' : 'uppercase'} ${readonly ? 'opacity-50 cursor-not-allowed' : ''}`} 
+        required={required && !readonly} 
+      />
+    </div>
+  );
+}
+
+function FormSelect({ label, name, value, onChange, options, defaultOption, required = false }) {
+  return (
+    <div className="w-full flex flex-col min-w-0">
+      <label className="block text-xs font-medium text-slate-400 mb-1.5 truncate" title={label}>{label}</label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full bg-slate-900 border border-slate-700 rounded-md p-2.5 text-slate-200 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-mono transition-colors"
+        required={required}
+      >
+        <option value="" disabled className="text-slate-500">{defaultOption}</option>
+        {options.map((opt, idx) => (
+          <option key={idx} value={opt.value} disabled={opt.disabled} className={opt.disabled ? "text-slate-600 bg-slate-900" : ""}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function FuelRow({ label, value, bold, isBlue, isGreen, textLarge }) {
+  return (
+    <div className={`flex justify-between items-center py-0.5 ${bold ? 'font-bold text-white print:text-black' : 'text-slate-300'} ${isBlue ? 'text-blue-400 print:text-black' : ''} ${isGreen ? 'text-green-400 print:text-black' : ''} ${textLarge ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'}`}>
+      <span className="tracking-wider">{label}</span>
+      <span className="font-mono tracking-wider">{value.toLocaleString('en-US')}</span>
+    </div>
+  );
+}
+
+function WtRow({ label, value, bold, textLarge }) {
+  return (
+    <div className={`flex justify-between items-center py-0.5 ${bold ? 'font-bold text-white print:text-black' : 'text-slate-300'} ${textLarge ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'}`}>
+      <span className="tracking-wider">{label}</span>
+      <span className="font-mono tracking-wider">{value.toLocaleString('en-US')}</span>
+    </div>
+  );
+}
+
+function WeatherTabBtn({ active, onClick, label }) {
+  return (
+    <button onClick={onClick} className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${active ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}>
+      {label}
+    </button>
+  );
+}
+
+function BriefingChart({ title, srcList, auth, useAuth = false }) {
+  return (
+    <div className="border border-slate-700 print:border-gray-400 rounded-md p-2 lg:p-3 bg-slate-900/30 print:bg-white flex flex-col h-[300px] sm:h-[350px] print:h-[450px]">
+       <h4 className="text-xs font-bold text-slate-300 print:text-black mb-2 text-center tracking-widest">{title}</h4>
+       <div className="flex-1 relative overflow-hidden bg-[#0f172a] print:bg-transparent rounded flex items-center justify-center p-1">
+         <WeatherImage srcList={srcList} alt={title} auth={auth} useAuth={useAuth} isBriefing={true} />
+       </div>
+    </div>
+  );
+}
+
+function NotamAccordion({ typeLabel, icao, notams }) {
+  const [isOpen, setIsOpen] = useState(false); 
+
+  useEffect(() => {
+    // 預設展開 DEP 與 ARR
+    if (typeLabel === 'DEP' || typeLabel === 'ARR') {
+      setIsOpen(true);
+    }
+  }, [typeLabel]);
+
+  if (!notams || notams.length === 0) return null;
+
+  return (
+    <div className="border border-slate-700 print:border-gray-300 rounded-md overflow-hidden bg-slate-900/30 print:bg-transparent">
+      <div className="w-full flex items-center justify-between p-3 bg-slate-800/80 hover:bg-slate-700 print:bg-gray-100 transition-colors text-left">
+        <button 
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-3 flex-1 outline-none print:pointer-events-none"
+        >
+          <span className={`px-2 py-0.5 rounded text-xs font-bold print:bg-gray-200 print:text-black ${typeLabel === 'DEP' || typeLabel === 'ARR' ? 'bg-green-900/50 text-green-400' : 'bg-yellow-900/50 text-yellow-400'}`}>
+            [{typeLabel}]
+          </span>
+          <span className="font-bold text-slate-200 print:text-black">{icao}</span>
+          <span className="text-xs text-slate-500 print:text-gray-600 bg-slate-950 print:bg-transparent px-2 py-0.5 rounded-full print:border print:border-gray-400">{notams.length} 則模擬公告</span>
+        </button>
+        <div className="flex items-center gap-4">
+          <a 
+            href={`https://notams.aim.faa.gov/notamSearch/nsapp.html#/results?searchType=0&locIds=${icao}`} 
+            target="_blank" 
+            rel="noreferrer" 
+            className="text-blue-400 hover:text-blue-300 text-[10px] sm:text-xs flex items-center gap-1 bg-slate-900/80 px-2 py-1.5 rounded transition-colors print:hidden pointer-events-auto"
+            title={`前往 FAA 系統查詢 ${icao} 即時 NOTAM`}
+          >
+            <ExternalLink className="w-3 h-3"/> FAA 查詢
+          </a>
+          <button onClick={() => setIsOpen(!isOpen)} className="outline-none print:hidden">
+             <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+          </button>
+        </div>
+      </div>
+      
+      <div className={`${isOpen ? 'block' : 'hidden'} print:block p-3 space-y-3 bg-slate-950/50 print:bg-transparent border-t border-slate-700 print:border-gray-300`}>
+        {notams.map((notam, idx) => (
+          <div key={idx} className={idx > 0 ? "border-t border-slate-800 print:border-gray-200 pt-3" : ""}>
+            <p className="text-slate-400 print:text-black whitespace-pre-wrap font-mono text-[11px] sm:text-xs leading-relaxed">{notam}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WeatherImage({ srcList, alt, auth, useAuth = false, isBriefing = false }) {
+  const [status, setStatus] = useState('loading'); 
+  const [renderSrc, setRenderSrc] = useState(null);
+  const [testInfo, setTestInfo] = useState({ count: 0 });
+
+  useEffect(() => {
+    let isMounted = true;
+    let objectUrl = null;
+
+    const loadImages = async () => {
+      setStatus('loading');
+      console.group(`[天氣引擎] 啟動抓取: ${alt}`);
+      console.log(`總計生成 ${srcList.length} 筆備援網址。`);
+      
+      for (let i = 0; i < srcList.length; i++) {
+        if (!isMounted) break;
+        const baseUrl = srcList[i];
+        setTestInfo({ count: i + 1 });
+        
+        console.groupCollapsed(`[測試 ${i+1}/${srcList.length}] ${baseUrl.split('/').pop()}`);
+
+        if (useAuth && auth && auth.username) {
+          try {
+            console.log(`-> [需授權] 嘗試 HTTP Basic Auth 網址: ${baseUrl}`);
+            const res = await fetch(baseUrl, {
+              headers: { 'Authorization': 'Basic ' + btoa(`${auth.username}:${auth.password}`) }
+            });
+            if (res.ok) {
+              const blob = await res.blob();
+              if (!isMounted) break;
+              objectUrl = URL.createObjectURL(blob);
+              setRenderSrc(objectUrl);
+              setStatus('success');
+              console.info('✅ [成功] Auth Fetch 成功取得圖資！');
+              console.groupEnd();
+              console.groupEnd();
+              return; 
+            } else {
+              console.warn(`❌ [失敗] 伺服器回傳錯誤代碼: ${res.status}`);
+            }
+          } catch(e) { 
+            console.warn(`❌ [失敗] Fetch 發生 CORS 或網路錯誤:`, e.message); 
+          }
+        } else {
+          console.log(`-> [免授權直連] 直接載入圖片: ${baseUrl}`);
+        }
+
+        try {
+          if (!isMounted) break;
+          await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => reject();
+            img.src = baseUrl;
+          });
+          if (!isMounted) break;
+          setRenderSrc(baseUrl);
+          setStatus('success');
+          console.info('✅ [成功] 直接載入圖片成功！');
+          console.groupEnd();
+          console.groupEnd();
+          return;
+        } catch(e) {
+          console.warn('❌ [失敗] 直接載入圖片失敗 (可能為 404 或 CORS 阻擋)。');
+        }
+
+        try {
+          const proxySrc = `https://api.allorigins.win/raw?url=${encodeURIComponent(baseUrl)}`;
+          console.log(`-> 嘗試代理伺服器繞過 網址: ${proxySrc}`);
+          if (!isMounted) break;
+          await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => reject();
+            img.src = proxySrc;
+          });
+          if (!isMounted) break;
+          setRenderSrc(proxySrc);
+          setStatus('success');
+          console.info('✅ [成功] 透過 Proxy 載入圖片成功！');
+          console.groupEnd();
+          console.groupEnd();
+          return;
+        } catch(e) {
+          console.warn('❌ [失敗] 代理伺服器亦無法載入此圖。準備切換至下一個歷史時段。');
+        }
+
+        console.groupEnd(); 
+      }
+
+      if (isMounted) {
+        console.error(`[天氣引擎] 掃描結束。所有 ${srcList.length} 筆網址皆已失效或被拒絕。`);
+        console.groupEnd();
+        setStatus('error');
+      }
+    };
+
+    loadImages();
+
+    return () => {
+      isMounted = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [srcList, auth, useAuth, alt]);
+
+  if (status === 'loading') {
+    return (
+      <div className="flex flex-col items-center justify-center text-slate-400 space-y-4 w-full h-full min-h-[200px] animate-in fade-in duration-500">
+         <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
+         <div className="text-center">
+           <p className="text-sm font-medium text-slate-300">正在背景掃描...</p>
+           {testInfo.count > 1 && (
+             <p className="text-xs text-slate-500 mt-1">
+               已掃描 {testInfo.count} 個可能時段，請查閱 Console
+             </p>
+           )}
+         </div>
+      </div>
+    );
+  }
+
+  if (status === 'error') {
+    const firstUrlTried = srcList?.[0] || '#';
+    return (
+      <div className="flex flex-col items-center justify-center text-slate-500 space-y-4 p-6 animate-in zoom-in-95 duration-300">
+        <AlertTriangle className={`${isBriefing ? 'w-8 h-8' : 'w-12 h-12'} text-slate-600`} />
+        <div className="text-center">
+          <p className={`${isBriefing ? 'text-sm' : 'text-base'} font-medium text-slate-300`}>無資料</p>
+           <a 
+            href={firstUrlTried} 
+            target="_blank" 
+            rel="noreferrer" 
+            className="text-[10px] sm:text-xs mt-4 inline-block font-mono text-blue-400 hover:text-blue-300 hover:underline break-all bg-slate-900 border border-slate-700 p-2 sm:p-3 rounded-md transition-colors"
+          >
+            開啟預期網址 &rarr;
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={renderSrc} 
+      alt={alt} 
+      className="max-w-full max-h-full object-contain rounded border border-slate-700 shadow-2xl bg-white/5 animate-in fade-in zoom-in-95 duration-500" 
+      referrerPolicy="no-referrer"
+    />
+  );
+}
+
+function WeatherView({ zuluTime, appSettings }) {
+  const [activeTab, setActiveTab] = useState('radar');
+  const [imgKey, setImgKey] = useState(Date.now());
+
+  const weatherSources = useMemo(() => ({
+    radar: { 
+      title: "最新雷達回波圖 (Radar)", 
+      urlList: ["https://aoaws.anws.gov.tw/data/www_content/realtime_links/domain4/radar_cwb_45.png"]
+    },
+    vis_satellite: { 
+      title: "最新可見光圖 (VIS Satellite)", 
+      urlList: ["https://aoaws.anws.gov.tw/data/www_content/realtime_links/domain3/mtsat_vis_45.png"]
+    },
+    sigwx_low: { 
+      title: "SFC-10000FT SIGWX", 
+      urlList: getDynamicSigwxUrls('sig1')
+    },
+    sigwx_mid: { 
+      title: "10000-25000FT SIGWX", 
+      urlList: getDynamicSigwxUrls('sig2')
+    },
+    sigwx_high: { 
+      title: "SFC-45000FT SIGWX", 
+      urlList: getDynamicSigwxUrls('sig4')
+    },
+    airmet: { 
+      title: "TPE AIRMET", 
+      urlList: getDynamicAirmetUrls()
+    }
+  }), [imgKey]); 
+
+  const handleRefresh = () => { setImgKey(Date.now()); };
+  const handleTabChange = (tab) => { setActiveTab(tab); };
+
+  return (
+    <div className="max-w-6xl mx-auto flex flex-col h-full space-y-4 w-full">
+      <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-md shrink-0 w-full">
+        <div className="flex gap-2 p-1 bg-slate-900 rounded-lg border border-slate-700 w-full lg:w-auto overflow-x-auto custom-scrollbar">
+          <WeatherTabBtn active={activeTab === 'radar'} onClick={() => handleTabChange('radar')} label="雷達回波 (Radar)" />
+          <WeatherTabBtn active={activeTab === 'vis_satellite'} onClick={() => handleTabChange('vis_satellite')} label="可見光 (VIS)" />
+          <WeatherTabBtn active={activeTab === 'sigwx_low'} onClick={() => handleTabChange('sigwx_low')} label="SFC-10K SIGWX" />
+          <WeatherTabBtn active={activeTab === 'sigwx_mid'} onClick={() => handleTabChange('sigwx_mid')} label="10K-25K SIGWX" />
+          <WeatherTabBtn active={activeTab === 'sigwx_high'} onClick={() => handleTabChange('sigwx_high')} label="SFC-45K SIGWX" />
+          <WeatherTabBtn active={activeTab === 'airmet'} onClick={() => handleTabChange('airmet')} label="TPE AIRMET" />
+        </div>
+        <div className="flex items-center justify-between lg:justify-end gap-4 text-sm w-full lg:w-auto border-t lg:border-t-0 border-slate-800 pt-3 lg:pt-0">
+          <span className="text-slate-400 font-mono flex items-center gap-2 text-xs sm:text-sm">
+            <Clock className="w-4 h-4 shrink-0" /> {zuluTime ? `${zuluTime} Z` : '00:00:00 Z'}
+          </span>
+          <button onClick={handleRefresh} className="flex items-center gap-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 px-3 py-1.5 rounded-md transition-colors border border-blue-500/30 whitespace-nowrap">
+            <RefreshCw className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">強制更新</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col relative w-full min-h-[400px]">
+        <div className="flex-1 p-2 sm:p-4 flex items-center justify-center bg-[#0f172a] relative overflow-auto custom-scrollbar w-full h-full">
+          <WeatherImage 
+            srcList={weatherSources[activeTab].urlList}
+            alt={weatherSources[activeTab].title}
+            auth={appSettings}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginView({ onLogin }) {
+  const [role, setRole] = useState('dispatcher'); 
+  const [name, setName] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onLogin({ name: name.toUpperCase(), role });
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 via-[#0f172a] to-slate-950 font-sans p-4">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="p-8 text-center border-b border-slate-800 bg-slate-900/50">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 text-blue-400 mb-4 shadow-inner shadow-blue-500/20">
+            <Navigation className="w-8 h-8" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">AeroDispatch<span className="text-blue-500">Pro</span></h1>
+          <p className="text-sm text-slate-400 uppercase tracking-widest font-medium">Aviation Operating System</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <div className="space-y-3">
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">選擇登入身份 (Select Role)</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => setRole('dispatcher')} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all ${role === 'dispatcher' ? 'bg-blue-600/20 border-blue-500 text-blue-400 shadow-lg shadow-blue-900/20' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-300'}`}>
+                <ShieldCheck className="w-6 h-6" />
+                <span className="text-sm font-bold">簽派員 Dispatcher</span>
+              </button>
+              <button type="button" onClick={() => setRole('pilot')} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all ${role === 'pilot' ? 'bg-indigo-600/20 border-indigo-500 text-indigo-400 shadow-lg shadow-indigo-900/20' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-300'}`}>
+                <Plane className="w-6 h-6" />
+                <span className="text-sm font-bold">飛行員 Pilot</span>
+              </button>
+            </div>
+          </div>
+          <div className="space-y-3 pt-2">
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">員工編號 / 姓名 (ID or Name)</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><User className="h-5 w-5 text-slate-500" /></div>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow uppercase placeholder:normal-case placeholder:text-slate-600 font-mono" placeholder={role === 'dispatcher' ? "e.g. DP_TPE_01" : "e.g. CAPT_WANG"} required />
+            </div>
+            <div className="relative opacity-60">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><KeyRound className="h-5 w-5 text-slate-500" /></div>
+              <input type="password" className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg pl-10 pr-4 py-3 cursor-not-allowed font-mono text-sm" value="••••••••" readOnly />
+            </div>
+          </div>
+          <button type="submit" className={`w-full py-3.5 rounded-lg text-white font-bold text-sm tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 ${role === 'dispatcher' ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/30' : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-900/30'}`}>
+            登入系統 (Login as {role === 'dispatcher' ? 'Dispatcher' : 'Pilot'})
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null); 
@@ -266,6 +711,18 @@ export default function App() {
 
   const handleLogin = (user) => {
     setCurrentUser(user);
+    
+    const savedSettings = localStorage.getItem(`AeroDispatch_Settings_${user.name}`);
+    if (savedSettings) {
+      try {
+        setAppSettings(JSON.parse(savedSettings));
+      } catch (e) {
+        console.error("無法解析使用者設定檔");
+      }
+    } else {
+      setAppSettings({ username: '', password: '', geminiApiKey: '', aiModel: 'gemini-3.1-pro-preview' });
+    }
+    
     setCurrentView('dashboard');
   };
 
@@ -463,6 +920,8 @@ export default function App() {
         @media print {
           @page { margin: 1cm; size: A4 portrait; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
+          /* 列印時強制顯示所有 NOTAM 面板 */
+          .print\\:block { display: block !important; }
         }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -484,384 +943,16 @@ export default function App() {
       {isSettingsOpen && (
         <SettingsModal 
           settings={appSettings} 
-          onSave={(newSettings) => { setAppSettings(newSettings); setIsSettingsOpen(false); }} 
+          onSave={(newSettings) => { 
+            setAppSettings(newSettings); 
+            if (currentUser) {
+              localStorage.setItem(`AeroDispatch_Settings_${currentUser.name}`, JSON.stringify(newSettings));
+            }
+            setIsSettingsOpen(false); 
+          }} 
           onClose={() => setIsSettingsOpen(false)} 
         />
       )}
-    </div>
-  );
-}
-
-// --- 輔助 UI 元件 ---
-function NavItem({ icon, label, active, onClick, isSub = false, collapsed = false }) {
-  return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 py-2.5 rounded-md transition-all group outline-none ${collapsed ? 'md:justify-center px-0 md:px-0 px-3' : 'px-3 justify-start'} ${active ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 border border-transparent'} ${isSub ? 'text-sm py-2' : 'font-medium'}`} title={label}>
-      <div className={`shrink-0 ${active && collapsed ? 'scale-110 transition-transform' : ''}`}>{icon}</div>
-      <span className={`whitespace-nowrap overflow-hidden text-ellipsis text-left flex-1 ${collapsed ? 'md:hidden block' : 'block'}`}>{label}</span>
-    </button>
-  );
-}
-
-function StatusCard({ title, value, color }) {
-  return (
-    <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 lg:p-6 flex flex-col justify-center shadow-md">
-      <h4 className="text-slate-400 text-sm font-medium mb-1 lg:mb-2">{title}</h4>
-      <span className={`text-3xl lg:text-4xl font-bold ${color}`}>{value}</span>
-    </div>
-  );
-}
-
-function FormInput({ label, name, value, onChange, placeholder, type = "text", readonly = false, required = false }) {
-  return (
-    <div className="w-full flex flex-col min-w-0">
-      <label className="block text-xs font-medium text-slate-400 mb-1.5 truncate" title={label}>{label}</label>
-      <input 
-        type={type} 
-        name={name} 
-        value={value} 
-        onChange={onChange} 
-        placeholder={placeholder} 
-        readOnly={readonly}
-        className={`w-full bg-slate-900 border border-slate-700 rounded-md p-2.5 text-slate-200 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-mono placeholder:text-slate-600 transition-colors ${type === 'date' ? '' : 'uppercase'} ${readonly ? 'opacity-50 cursor-not-allowed' : ''}`} 
-        required={required && !readonly} 
-      />
-    </div>
-  );
-}
-
-function FormSelect({ label, name, value, onChange, options, defaultOption, required = false }) {
-  return (
-    <div className="w-full flex flex-col min-w-0">
-      <label className="block text-xs font-medium text-slate-400 mb-1.5 truncate" title={label}>{label}</label>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        className="w-full bg-slate-900 border border-slate-700 rounded-md p-2.5 text-slate-200 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-mono transition-colors"
-        required={required}
-      >
-        <option value="" disabled className="text-slate-500">{defaultOption}</option>
-        {options.map((opt, idx) => (
-          <option key={idx} value={opt.value} disabled={opt.disabled} className={opt.disabled ? "text-slate-600 bg-slate-900" : ""}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function FuelRow({ label, value, bold, isBlue, isGreen, textLarge }) {
-  return (
-    <div className={`flex justify-between items-center py-0.5 ${bold ? 'font-bold text-white print:text-black' : 'text-slate-300'} ${isBlue ? 'text-blue-400 print:text-black' : ''} ${isGreen ? 'text-green-400 print:text-black' : ''} ${textLarge ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'}`}>
-      <span className="tracking-wider">{label}</span>
-      <span className="font-mono tracking-wider">{value.toLocaleString('en-US')}</span>
-    </div>
-  );
-}
-
-function WtRow({ label, value, bold, textLarge }) {
-  return (
-    <div className={`flex justify-between items-center py-0.5 ${bold ? 'font-bold text-white print:text-black' : 'text-slate-300'} ${textLarge ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'}`}>
-      <span className="tracking-wider">{label}</span>
-      <span className="font-mono tracking-wider">{value.toLocaleString('en-US')}</span>
-    </div>
-  );
-}
-
-function WeatherTabBtn({ active, onClick, label }) {
-  return (
-    <button onClick={onClick} className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${active ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}>
-      {label}
-    </button>
-  );
-}
-
-function BriefingChart({ title, srcList, auth }) {
-  return (
-    <div className="border border-slate-700 print:border-gray-400 rounded-md p-2 lg:p-3 bg-slate-900/30 print:bg-white flex flex-col h-[300px] sm:h-[350px] print:h-[450px]">
-       <h4 className="text-xs font-bold text-slate-300 print:text-black mb-2 text-center tracking-widest">{title}</h4>
-       <div className="flex-1 relative overflow-hidden bg-[#0f172a] print:bg-transparent rounded flex items-center justify-center p-1">
-         <WeatherImage srcList={srcList} alt={title} auth={auth} isBriefing={true} />
-       </div>
-    </div>
-  );
-}
-
-// --- Weather Image Component ---
-function WeatherImage({ srcList, alt, auth, isBriefing = false }) {
-  const [status, setStatus] = useState('loading'); 
-  const [renderSrc, setRenderSrc] = useState(null);
-  const [testInfo, setTestInfo] = useState({ count: 0 });
-
-  useEffect(() => {
-    let isMounted = true;
-    let objectUrl = null;
-
-    const loadImages = async () => {
-      setStatus('loading');
-      console.group(`[天氣引擎] 啟動抓取: ${alt}`);
-      console.log(`總計生成 ${srcList.length} 筆備援網址。`);
-      
-      for (let i = 0; i < srcList.length; i++) {
-        if (!isMounted) break;
-        const baseUrl = srcList[i];
-        setTestInfo({ count: i + 1 });
-        
-        console.groupCollapsed(`[測試 ${i+1}/${srcList.length}] ${baseUrl.split('/').pop()}`);
-
-        if (auth && auth.username) {
-          try {
-            console.log(`-> 嘗試 HTTP Basic Auth 網址: ${baseUrl}`);
-            const res = await fetch(baseUrl, {
-              headers: { 'Authorization': 'Basic ' + btoa(`${auth.username}:${auth.password}`) }
-            });
-            if (res.ok) {
-              const blob = await res.blob();
-              if (!isMounted) break;
-              objectUrl = URL.createObjectURL(blob);
-              setRenderSrc(objectUrl);
-              setStatus('success');
-              console.info('✅ [成功] Auth Fetch 成功取得圖資！');
-              console.groupEnd();
-              console.groupEnd();
-              return; 
-            } else {
-              console.warn(`❌ [失敗] 伺服器回傳錯誤代碼: ${res.status}`);
-            }
-          } catch(e) { 
-            console.warn(`❌ [失敗] Fetch 發生 CORS 或網路錯誤:`, e.message); 
-          }
-        } else {
-          console.log('-> [方法1] 未設定帳密或此為公開圖資，跳過 Auth Fetch。');
-        }
-
-        try {
-          console.log(`-> 嘗試公開直連 網址: ${baseUrl}`);
-          if (!isMounted) break;
-          await new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve();
-            img.onerror = () => reject();
-            img.src = baseUrl;
-          });
-          if (!isMounted) break;
-          setRenderSrc(baseUrl);
-          setStatus('success');
-          console.info('✅ [成功] 直接載入圖片成功！');
-          console.groupEnd();
-          console.groupEnd();
-          return;
-        } catch(e) {
-          console.warn('❌ [失敗] 直接載入圖片失敗 (可能為 404 或 CORS 阻擋)。');
-        }
-
-        try {
-          const proxySrc = `https://api.allorigins.win/raw?url=${encodeURIComponent(baseUrl)}`;
-          console.log(`-> 嘗試代理伺服器繞過 網址: ${proxySrc}`);
-          if (!isMounted) break;
-          await new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve();
-            img.onerror = () => reject();
-            img.src = proxySrc;
-          });
-          if (!isMounted) break;
-          setRenderSrc(proxySrc);
-          setStatus('success');
-          console.info('✅ [成功] 透過 Proxy 載入圖片成功！');
-          console.groupEnd();
-          console.groupEnd();
-          return;
-        } catch(e) {
-          console.warn('❌ [失敗] 代理伺服器亦無法載入此圖。準備切換至下一個歷史時段。');
-        }
-
-        console.groupEnd(); 
-      }
-
-      if (isMounted) {
-        console.error(`[天氣引擎] 掃描結束。所有 ${srcList.length} 筆網址皆已失效或被拒絕。`);
-        console.groupEnd();
-        setStatus('error');
-      }
-    };
-
-    loadImages();
-
-    return () => {
-      isMounted = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [srcList, auth, alt]);
-
-  if (status === 'loading') {
-    return (
-      <div className="flex flex-col items-center justify-center text-slate-400 space-y-4 w-full h-full min-h-[200px] animate-in fade-in duration-500">
-         <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
-         <div className="text-center">
-           <p className="text-sm font-medium text-slate-300">正在背景掃描...</p>
-           {testInfo.count > 1 && (
-             <p className="text-xs text-slate-500 mt-1">
-               已掃描 {testInfo.count} 個可能時段，請查閱 Console
-             </p>
-           )}
-         </div>
-      </div>
-    );
-  }
-
-  if (status === 'error') {
-    const firstUrlTried = srcList?.[0] || '#';
-    return (
-      <div className="flex flex-col items-center justify-center text-slate-500 space-y-4 p-6 animate-in zoom-in-95 duration-300">
-        <AlertTriangle className={`${isBriefing ? 'w-8 h-8' : 'w-12 h-12'} text-slate-600`} />
-        <div className="text-center">
-          <p className={`${isBriefing ? 'text-sm' : 'text-base'} font-medium text-slate-300`}>無資料</p>
-           <a 
-            href={firstUrlTried} 
-            target="_blank" 
-            rel="noreferrer" 
-            className="text-[10px] sm:text-xs mt-4 inline-block font-mono text-blue-400 hover:text-blue-300 hover:underline break-all bg-slate-900 border border-slate-700 p-2 sm:p-3 rounded-md transition-colors"
-          >
-            開啟預期網址 &rarr;
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <img 
-      src={renderSrc} 
-      alt={alt} 
-      className="max-w-full max-h-full object-contain rounded border border-slate-700 shadow-2xl bg-white/5 animate-in fade-in zoom-in-95 duration-500" 
-      referrerPolicy="no-referrer"
-    />
-  );
-}
-
-function WeatherView({ zuluTime, appSettings }) {
-  const [activeTab, setActiveTab] = useState('radar');
-  const [imgKey, setImgKey] = useState(Date.now());
-
-  const weatherSources = useMemo(() => ({
-    radar: { 
-      title: "最新雷達回波圖 (Radar)", 
-      urlList: ["https://aoaws.anws.gov.tw/data/www_content/realtime_links/domain4/radar_cwb_45.png"]
-    },
-    vis_satellite: { 
-      title: "最新可見光圖 (VIS Satellite)", 
-      urlList: ["https://aoaws.anws.gov.tw/data/www_content/realtime_links/domain3/mtsat_vis_45.png"]
-    },
-    sigwx_low: { 
-      title: "SFC-10000FT SIGWX", 
-      urlList: getDynamicSigwxUrls('sig1')
-    },
-    sigwx_mid: { 
-      title: "10000-25000FT SIGWX", 
-      urlList: getDynamicSigwxUrls('sig2')
-    },
-    sigwx_high: { 
-      title: "SFC-45000FT SIGWX", 
-      urlList: getDynamicSigwxUrls('sig4')
-    },
-    airmet: { 
-      title: "TPE AIRMET", 
-      urlList: getDynamicAirmetUrls()
-    }
-  }), [imgKey]); 
-
-  const handleRefresh = () => { setImgKey(Date.now()); };
-  const handleTabChange = (tab) => { setActiveTab(tab); };
-
-  return (
-    <div className="max-w-6xl mx-auto flex flex-col h-full space-y-4 w-full">
-      <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-md shrink-0 w-full">
-        <div className="flex gap-2 p-1 bg-slate-900 rounded-lg border border-slate-700 w-full lg:w-auto overflow-x-auto custom-scrollbar">
-          <WeatherTabBtn active={activeTab === 'radar'} onClick={() => handleTabChange('radar')} label="雷達回波 (Radar)" />
-          <WeatherTabBtn active={activeTab === 'vis_satellite'} onClick={() => handleTabChange('vis_satellite')} label="可見光 (VIS)" />
-          <WeatherTabBtn active={activeTab === 'sigwx_low'} onClick={() => handleTabChange('sigwx_low')} label="SFC-10K SIGWX" />
-          <WeatherTabBtn active={activeTab === 'sigwx_mid'} onClick={() => handleTabChange('sigwx_mid')} label="10K-25K SIGWX" />
-          <WeatherTabBtn active={activeTab === 'sigwx_high'} onClick={() => handleTabChange('sigwx_high')} label="SFC-45K SIGWX" />
-          <WeatherTabBtn active={activeTab === 'airmet'} onClick={() => handleTabChange('airmet')} label="TPE AIRMET" />
-        </div>
-        <div className="flex items-center justify-between lg:justify-end gap-4 text-sm w-full lg:w-auto border-t lg:border-t-0 border-slate-800 pt-3 lg:pt-0">
-          <span className="text-slate-400 font-mono flex items-center gap-2 text-xs sm:text-sm">
-            <Clock className="w-4 h-4 shrink-0" /> {zuluTime ? `${zuluTime} Z` : '00:00:00 Z'}
-          </span>
-          <button onClick={handleRefresh} className="flex items-center gap-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 px-3 py-1.5 rounded-md transition-colors border border-blue-500/30 whitespace-nowrap">
-            <RefreshCw className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">強制更新</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col relative w-full min-h-[400px]">
-        <div className="flex-1 p-2 sm:p-4 flex items-center justify-center bg-[#0f172a] relative overflow-auto custom-scrollbar w-full h-full">
-          <WeatherImage 
-            srcList={weatherSources[activeTab].urlList}
-            alt={weatherSources[activeTab].title}
-            auth={appSettings}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// --- Views ---
-function LoginView({ onLogin }) {
-  const [role, setRole] = useState('dispatcher'); 
-  const [name, setName] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    onLogin({ name: name.toUpperCase(), role });
-  };
-
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 via-[#0f172a] to-slate-950 font-sans p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
-        <div className="p-8 text-center border-b border-slate-800 bg-slate-900/50">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 text-blue-400 mb-4 shadow-inner shadow-blue-500/20">
-            <Navigation className="w-8 h-8" />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">AeroDispatch<span className="text-blue-500">Pro</span></h1>
-          <p className="text-sm text-slate-400 uppercase tracking-widest font-medium">Aviation Operating System</p>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="space-y-3">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">選擇登入身份 (Select Role)</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setRole('dispatcher')} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all ${role === 'dispatcher' ? 'bg-blue-600/20 border-blue-500 text-blue-400 shadow-lg shadow-blue-900/20' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-300'}`}>
-                <ShieldCheck className="w-6 h-6" />
-                <span className="text-sm font-bold">簽派員 Dispatcher</span>
-              </button>
-              <button type="button" onClick={() => setRole('pilot')} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all ${role === 'pilot' ? 'bg-indigo-600/20 border-indigo-500 text-indigo-400 shadow-lg shadow-indigo-900/20' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-300'}`}>
-                <Plane className="w-6 h-6" />
-                <span className="text-sm font-bold">飛行員 Pilot</span>
-              </button>
-            </div>
-          </div>
-          <div className="space-y-3 pt-2">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">員工編號 / 姓名 (ID or Name)</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><User className="h-5 w-5 text-slate-500" /></div>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow uppercase placeholder:normal-case placeholder:text-slate-600 font-mono" placeholder={role === 'dispatcher' ? "e.g. DP_TPE_01" : "e.g. CAPT_WANG"} required />
-            </div>
-            <div className="relative opacity-60">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><KeyRound className="h-5 w-5 text-slate-500" /></div>
-              <input type="password" className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg pl-10 pr-4 py-3 cursor-not-allowed font-mono text-sm" value="••••••••" readOnly />
-            </div>
-          </div>
-          <button type="submit" className={`w-full py-3.5 rounded-lg text-white font-bold text-sm tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 ${role === 'dispatcher' ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/30' : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-900/30'}`}>
-            登入系統 (Login as {role === 'dispatcher' ? 'Dispatcher' : 'Pilot'})
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </form>
-      </div>
     </div>
   );
 }
@@ -1305,11 +1396,11 @@ function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
         value = val;
       }
 
-      // ★ 判斷是否滿足觸發條件：編輯的是 Block Out (std) 且航線中有 Block Time 設定
+      // 判斷是否滿足觸發條件：編輯的是 Block Out (std) 且航線中有 Block Time 設定
       if (name === 'std' && rawNums.length >= 4 && matchingRoute && matchingRoute.blockTime) {
          const newSta = calculateBlockIn(value, matchingRoute.blockTime);
          setFormData(prev => ({ ...prev, std: value, sta: newSta }));
-         return; // 因為我們在裡面 setState 了，直接 return 避免再次執行下面的 setState
+         return; 
       }
 
     } else if (name !== 'date' && name !== 'remarks' && name !== 'ddItems') {
@@ -1661,12 +1752,25 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
     
     const altnsList = [flight.altn1, flight.altn2, flight.altn3].filter(Boolean).join(', ');
     
+    const notamsPrompt = [
+        { type: 'DEP', icao: flight.dep },
+        { type: 'ARR', icao: flight.arr },
+        { type: 'ALTN1', icao: flight.altn1 },
+        { type: 'ALTN2', icao: flight.altn2 },
+        { type: 'ALTN3', icao: flight.altn3 }
+    ].filter(item => item.icao).map(item => {
+        const nList = mockNotam(item.icao);
+        const joinedNotams = nList.map(n => n.replace(/\n/g, ' ')).join('\n  - ');
+        return `[${item.type}] ${item.icao}:\n  - ${joinedNotams}`;
+    }).join('\n');
+
     try {
       const prompt = `請扮演資深的航空簽派員，根據以下營運飛行計畫(OFP)資料，產生一份給飛行員的「航班風險與注意事項簡報」。
 要求：
 1. 請以「繁體中文」輸出，排版使用 Markdown 條列式，重點清晰、語氣專業。
-2. 內容需包含：油量充裕度評估、機況限制評估、航路潛在風險、起降場/備降場注意事項。
+2. 內容需包含：油量充裕度評估、機況限制評估、航路潛在風險、起降場/備降場注意事項(含NOTAM)。
 3. 【重要時間轉換】：飛行計畫中的 Block Out 與 Block In 時間均為 ZULU Time (UTC)。在評估日夜間操作風險或機場起降時間限制時，請務必先自行將 ZULU Time 轉換為該機場的 Local Time（當地時間）。例如從台灣 (UTC+8) 23:35Z 起飛，當地時間為隔日上午 07:35，屬於日間操作，切勿當作深夜航班評估。
+4. 【NOTAM 注意事項】：飛航公告 (NOTAM) 內的時間皆為 UTC (ZULU Time)，評估時請特別留意跑道關閉或設施限制等對飛安或油量的影響。
 
 【航班基礎資訊】
 - 航班：${flight.callsign} (機型：${flight.aircraft} / ${flight.registration})
@@ -1687,13 +1791,15 @@ ${flight.altn3 ? `- 備降場3 (${flight.altn3}) 油量：${f.altn3}` : ''}
 - 預估起飛重量 (TOW)：${w.tow}
 - 無油重量 (ZFW)：${w.zfw}
 
+【飛航公告 (NOTAM)】
+${notamsPrompt}
+
 【機況、航路與簽派備註】
 - 機況 DD Items：${flight.ddItems || 'NIL'}
 - ATC Route：${formattedRoute}
 - Dispatcher Remarks：${flight.remarks || 'NIL'}
 `;
 
-      // ★ 在主控台顯示送給 AI 的 Prompt
       console.group("🤖 [AI 智能分析] 傳送給 Gemini 的 Prompt 內容：");
       console.log(prompt);
       console.groupEnd();
@@ -1719,6 +1825,8 @@ ${flight.altn3 ? `- 備降場3 (${flight.altn3}) 油量：${f.altn3}` : ''}
       setAiLoading(false);
     }
   };
+
+  const allIcaosForNotam = [flight.dep, flight.arr, flight.altn1, flight.altn2, flight.altn3].filter(Boolean).join(',');
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-20 print:pb-0 print:space-y-0 w-full">
@@ -1844,7 +1952,7 @@ ${flight.altn3 ? `- 備降場3 (${flight.altn3}) 油量：${f.altn3}` : ''}
               {[flight.altn1, flight.altn2, flight.altn3].map((altnApt, idx) => {
                  if (!altnApt) return null;
                  return (
-                   <div key={`altn-${idx}`} className="border-t border-slate-700 print:border-gray-300 pt-3 break-words">
+                   <div key={`altn-wx-${idx}`} className="border-t border-slate-700 print:border-gray-300 pt-3 break-words">
                      <span className="inline-block bg-slate-800 print:bg-gray-200 text-slate-300 print:text-gray-700 px-2 py-0.5 rounded text-xs mr-2 font-bold">[ALTN {idx+1}]</span>
                      <span className="text-yellow-400 print:text-black font-bold text-sm sm:text-base">{altnApt}</span>
                      <p className="text-slate-400 print:text-black mt-1.5">METAR {altnApt} 280700Z 18015G25KT 5000 -RA BR FEW015 BKN030 18/16 Q1008 NOSIG=</p>
@@ -1860,16 +1968,49 @@ ${flight.altn3 ? `- 備降場3 (${flight.altn3}) 油量：${f.altn3}` : ''}
              <CloudLightning className="w-4 h-4 print:hidden" /> 5. Enroute Weather Charts
            </h3>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-              <BriefingChart title="SFC-10000FT SIGWX" srcList={sigwxLowList} auth={null} />
-              <BriefingChart title="10000-25000FT SIGWX" srcList={sigwxMidList} auth={null} />
-              <BriefingChart title="SFC-45000FT SIGWX" srcList={sigwxHighList} auth={null} />
-              <BriefingChart title="TPE AIRMET" srcList={airmetList} auth={appSettings} />
+              <BriefingChart title="SFC-10000FT SIGWX" srcList={sigwxLowList} auth={null} useAuth={false} />
+              <BriefingChart title="10000-25000FT SIGWX" srcList={sigwxMidList} auth={null} useAuth={false} />
+              <BriefingChart title="SFC-45000FT SIGWX" srcList={sigwxHighList} auth={null} useAuth={false} />
+              <BriefingChart title="TPE AIRMET" srcList={airmetList} auth={appSettings} useAuth={true} />
            </div>
         </div>
 
-        <div className="mt-8">
+        {/* 第 6 項 NOTAM 區塊 */}
+        <div className="mt-8 print:break-before-page">
+           <div className="flex justify-between items-center mb-3">
+             <h3 className="text-white print:text-black border-b border-slate-600 print:border-black pb-1 font-bold uppercase flex items-center gap-2 text-sm sm:text-base flex-1">
+               <FileText className="w-4 h-4 print:hidden" /> 6. NOTAM (飛航公告)
+             </h3>
+             <a 
+                href={`https://notams.aim.faa.gov/notamSearch/nsapp.html#/results?searchType=0&locIds=${allIcaosForNotam}`} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="ml-4 bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors print:hidden shadow-lg shadow-blue-900/20"
+                title="在 FAA 系統一次開啟本航班所有相關機場"
+             >
+                <ExternalLink className="w-3 h-3 shrink-0" /> <span className="hidden sm:inline">於 FAA 系統開啟全部</span><span className="sm:hidden">FAA 查詢</span>
+             </a>
+           </div>
+           
+           <div className="space-y-3">
+              {[
+                { type: 'DEP', icao: flight.dep },
+                { type: 'ARR', icao: flight.arr },
+                { type: 'ALTN 1', icao: flight.altn1 },
+                { type: 'ALTN 2', icao: flight.altn2 },
+                { type: 'ALTN 3', icao: flight.altn3 }
+              ].map((item, idx) => {
+                 if (!item.icao) return null;
+                 const notamsList = mockNotam(item.icao);
+                 return <NotamAccordion key={`notam-${idx}`} typeLabel={item.type} icao={item.icao} notams={notamsList} />;
+              })}
+           </div>
+        </div>
+
+        {/* 第 7 項 機況 DD Items */}
+        <div className="mt-8 print:break-before-page">
            <h3 className="text-white print:text-black border-b border-slate-600 print:border-black mb-3 pb-1 font-bold uppercase flex items-center gap-2 text-sm sm:text-base">
-             <Wrench className="w-4 h-4 print:hidden" /> 6. 機況 DD Items (Deferred Defects)
+             <Wrench className="w-4 h-4 print:hidden" /> 7. 機況 DD Items (Deferred Defects)
            </h3>
            <div className="bg-slate-900/80 print:bg-gray-100 p-3 sm:p-4 border border-slate-700 print:border-gray-400 rounded-md">
               <div className="flex justify-between items-center mb-1">
@@ -1892,9 +2033,10 @@ ${flight.altn3 ? `- 備降場3 (${flight.altn3}) 油量：${f.altn3}` : ''}
            </div>
         </div>
 
+        {/* 第 8 項 AI 分析功能區塊 */}
         <div className="mt-8 print:break-before-page">
            <h3 className="text-white print:text-black border-b border-slate-600 print:border-black mb-3 pb-1 font-bold uppercase flex items-center gap-2 text-sm sm:text-base">
-             <Sparkles className="w-4 h-4 print:hidden text-blue-400" /> 7. AI Flight Briefing Analysis
+             <Sparkles className="w-4 h-4 print:hidden text-blue-400" /> 8. AI Flight Briefing Analysis
            </h3>
            <div className="bg-slate-900/60 print:bg-transparent print:p-0 print:border-none p-5 rounded-md border border-slate-700 text-xs sm:text-sm">
               {!aiReport && !aiLoading && (
