@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   PlaneTakeoff, PlaneLanding, FileText, CloudRain, Clock, 
   Settings, ChevronRight, ChevronLeft, Plus, Map, Info, AlertTriangle, 
   CheckCircle, Navigation, Printer, CloudLightning, RefreshCw, ZoomIn,
   Menu, X, LogOut, User, KeyRound, ShieldCheck, Plane, Database, Trash2, Edit, Sparkles, Bot, Wrench, ExternalLink
 } from 'lucide-react';
+
+// 環境提供的 API Key (如在外部執行會為空字串，系統將退回使用使用者自行輸入的 Key)
+const envApiKey = "";
 
 // --- Mock Data ---
 const initialAircrafts = [
@@ -17,32 +20,17 @@ const initialAircrafts = [
 
 const initialAirports = [
   { icao: 'RCTP', name: 'TAIPEI TAOYUAN INTL' },
-  { icao: 'KJFK', name: 'NEW YORK JOHN F KENNEDY' },
-  { icao: 'VHHH', name: 'HONG KONG INTL' },
-  { icao: 'RJTT', name: 'TOKYO HANEDA' },
-  { icao: 'KBOS', name: 'BOSTON LOGAN INTL' },
-  { icao: 'KEWR', name: 'NEWARK LIBERTY INTL' },
-  { icao: 'VMMC', name: 'MACAU INTL' },
-  { icao: 'RJAA', name: 'TOKYO NARITA' },
   { icao: 'RCKH', name: 'KAOHSIUNG INTL' },
   { icao: 'RCQC', name: 'MAKUNG' },
   { icao: 'RCMQ', name: 'TAICHUNG INTL' },
-  { icao: 'RCSS', name: 'TAIPEI SONGSHAN' }
+  { icao: 'RCSS', name: 'TAIPEI SONGSHAN' },
+  { icao: 'RCFN', name: 'TAITUNG' },
+  { icao: 'RCYU', name: 'HUALIEN' },
+  { icao: 'RCBS', name: 'KINMEN' },
+  { icao: 'RCFG', name: 'MATSU NANGAN' }
 ];
 
 const initialRoutes = [
-  {
-    id: 'r1', dep: 'RCTP', arr: 'KJFK', acftType: 'B777-300ER', distance: 6800, blockTime: 870,
-    atcRoute: 'SID CHALI M750 ENVAR OTR8 SEALS 50N160E 50N170E 49N180E 47N170W 45N160W 43N150W 40N140W 38N130W 35N120W STAR',
-    altn1Apt: 'KBOS', altn2Apt: 'KEWR', altn3Apt: '',
-    trip: 105000, altn1: 4500, altn2: 4800, altn3: 0, finres: 3200, cont: 5250, taxi: 800, extra: 2000
-  },
-  {
-    id: 'r2', dep: 'RCTP', arr: 'VHHH', acftType: 'A330-300', distance: 430, blockTime: 105,
-    atcRoute: 'SID CHALI T1 KADAP M750 ENVAR V512 ABBEY STAR',
-    altn1Apt: 'VMMC', altn2Apt: '', altn3Apt: '',
-    trip: 12500, altn1: 2100, altn2: 0, altn3: 0, finres: 1800, cont: 625, taxi: 400, extra: 0
-  },
   {
     id: 'r3', dep: 'RCKH', arr: 'RCQC', acftType: 'ATR72-600', distance: 122, blockTime: 45,
     atcRoute: 'TNN1C TNN W6 MKG SEGMA',
@@ -51,54 +39,7 @@ const initialRoutes = [
   }
 ];
 
-const initialFlights = [
-  {
-    id: '1',
-    callsign: 'EVA031',
-    airline: 'BR',
-    aircraft: 'B777-300ER',
-    registration: 'B-16722',
-    date: '2026-02-27',
-    dep: 'RCTP',
-    arr: 'KJFK',
-    altn1: 'KBOS',
-    altn2: 'KEWR',
-    altn3: '',
-    std: '23:35Z',
-    sta: '14:05',
-    status: 'CLEARED',
-    dispatcherSign: 'DP_AUTH_01',
-    captainSign: null,
-    route: 'SID CHALI M750 ENVAR OTR8 SEALS 50N160E 50N170E 49N180E 47N170W 45N160W 43N150W 40N140W 38N130W 35N120W STAR',
-    weights: { zfw: 220500, payload: 52000, tow: 335000, law: 245000 },
-    fuel: { trip: 105000, cont: 5250, altn1: 4500, altn2: 4800, altn3: 0, finres: 3200, extra: 2000, taxi: 800 },
-    remarks: 'NIL SIG WX ENROUTE.',
-    ddItems: 'NIL'
-  },
-  {
-    id: '2',
-    callsign: 'CAL731',
-    airline: 'CI',
-    aircraft: 'A330-300',
-    registration: 'B-18355',
-    date: '2026-02-28',
-    dep: 'RCTP',
-    arr: 'VHHH',
-    altn1: 'VMMC',
-    altn2: '',
-    altn3: '',
-    std: '04:00Z',
-    sta: '05:45',
-    status: 'PREFLIGHT',
-    dispatcherSign: null,
-    captainSign: null,
-    route: 'SID CHALI T1 KADAP M750 ENVAR V512 ABBEY STAR',
-    weights: { zfw: 165000, payload: 38000, tow: 195000, law: 182000 },
-    fuel: { trip: 12500, cont: 625, altn1: 2100, altn2: 0, altn3: 0, finres: 1800, extra: 0, taxi: 400 },
-    remarks: 'VHHH EXP DELAY DUE TO HEAVY TFC.',
-    ddItems: 'NIL'
-  }
-];
+const initialFlights = [];
 
 // --- Block In Time Auto Calculation Helper ---
 const calculateBlockIn = (stdStr, blockTimeMins) => {
@@ -204,8 +145,8 @@ const getDynamicSigwxUrls = (basePrefix, targetDateStr = null, targetHourStr = n
   return [...new Set(urls)];
 };
 
-// --- 模擬飛航公告資料 Helper ---
-const mockNotam = (icao) => {
+// --- 模擬飛航公告資料與自訂 NOTAM 整合 Helper ---
+const getNotamsForIcao = (icao, airports) => {
   if (!icao) return [];
   const notams = {
     'RCTP': [
@@ -246,9 +187,14 @@ const mockNotam = (icao) => {
     ]
   };
   
-  return notams[icao] || [
+  const baseNotams = notams[icao] || [
     `A0000/26 NOTAMN\nQ) XXXX/QXXXX/IV/NBO/A/000/999/\nA) ${icao}\nB) 2603010000 C) 2612312359\nE) NIL SIG NOTAM.`
   ];
+
+  const apt = airports?.find(a => a.icao === icao);
+  const customNotams = apt?.notams || [];
+  
+  return [...customNotams, ...baseNotams];
 };
 
 // --- 輔助 UI 元件 ---
@@ -336,12 +282,12 @@ function WeatherTabBtn({ active, onClick, label }) {
   );
 }
 
-function BriefingChart({ title, srcList, auth, useAuth = false }) {
+function BriefingChart({ title, srcList, auth, useAuth = false, skipProxy = false }) {
   return (
     <div className="border border-slate-700 print:border-gray-400 rounded-md p-2 lg:p-3 bg-slate-900/30 print:bg-white flex flex-col h-[300px] sm:h-[350px] print:h-[450px]">
        <h4 className="text-xs font-bold text-slate-300 print:text-black mb-2 text-center tracking-widest">{title}</h4>
        <div className="flex-1 relative overflow-hidden bg-[#0f172a] print:bg-transparent rounded flex items-center justify-center p-1">
-         <WeatherImage srcList={srcList} alt={title} auth={auth} useAuth={useAuth} isBriefing={true} />
+         <WeatherImage srcList={srcList} alt={title} auth={auth} useAuth={useAuth} isBriefing={true} skipProxy={skipProxy} />
        </div>
     </div>
   );
@@ -371,17 +317,17 @@ function NotamAccordion({ typeLabel, icao, notams }) {
             [{typeLabel}]
           </span>
           <span className="font-bold text-slate-200 print:text-black">{icao}</span>
-          <span className="text-xs text-slate-500 print:text-gray-600 bg-slate-950 print:bg-transparent px-2 py-0.5 rounded-full print:border print:border-gray-400">{notams.length} 則模擬公告</span>
+          <span className="text-xs text-slate-500 print:text-gray-600 bg-slate-950 print:bg-transparent px-2 py-0.5 rounded-full print:border print:border-gray-400">{notams.length} 則 NOTAM</span>
         </button>
         <div className="flex items-center gap-4">
           <a 
-            href={`https://notams.aim.faa.gov/notamSearch/nsapp.html#/results?searchType=0&locIds=${icao}`} 
+            href="https://ais.anws.gov.tw" 
             target="_blank" 
             rel="noreferrer" 
             className="text-blue-400 hover:text-blue-300 text-[10px] sm:text-xs flex items-center gap-1 bg-slate-900/80 px-2 py-1.5 rounded transition-colors print:hidden pointer-events-auto"
-            title={`前往 FAA 系統查詢 ${icao} 即時 NOTAM`}
+            title={`前往 ANWS AIS 系統查詢 ${icao} 即時 NOTAM`}
           >
-            <ExternalLink className="w-3 h-3"/> FAA 查詢
+            <ExternalLink className="w-3 h-3"/> AIS 查詢
           </a>
           <button onClick={() => setIsOpen(!isOpen)} className="outline-none print:hidden">
              <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
@@ -400,7 +346,7 @@ function NotamAccordion({ typeLabel, icao, notams }) {
   );
 }
 
-function WeatherImage({ srcList, alt, auth, useAuth = false, isBriefing = false }) {
+function WeatherImage({ srcList, alt, auth, useAuth = false, isBriefing = false, skipProxy = false }) {
   const [status, setStatus] = useState('loading'); 
   const [renderSrc, setRenderSrc] = useState(null);
   const [testInfo, setTestInfo] = useState({ count: 0 });
@@ -413,6 +359,7 @@ function WeatherImage({ srcList, alt, auth, useAuth = false, isBriefing = false 
       setStatus('loading');
       console.group(`[天氣引擎] 啟動抓取: ${alt}`);
       console.log(`總計生成 ${srcList.length} 筆備援網址。`);
+      console.log(`🔧 [設定檔] useAuth: ${useAuth}, skipProxy: ${skipProxy}`);
       
       for (let i = 0; i < srcList.length; i++) {
         if (!isMounted) break;
@@ -420,6 +367,7 @@ function WeatherImage({ srcList, alt, auth, useAuth = false, isBriefing = false 
         setTestInfo({ count: i + 1 });
         
         console.groupCollapsed(`[測試 ${i+1}/${srcList.length}] ${baseUrl.split('/').pop()}`);
+        console.log(`🔗 完整網址: ${baseUrl}`);
 
         if (useAuth && auth && auth.username) {
           try {
@@ -438,13 +386,13 @@ function WeatherImage({ srcList, alt, auth, useAuth = false, isBriefing = false 
               console.groupEnd();
               return; 
             } else {
-              console.warn(`❌ [失敗] 伺服器回傳錯誤代碼: ${res.status}`);
+              console.warn(`❌ [失敗] 伺服器回傳錯誤代碼: ${res.status} ${res.statusText}`);
             }
           } catch(e) { 
-            console.warn(`❌ [失敗] Fetch 發生 CORS 或網路錯誤:`, e.message); 
+            console.warn(`❌ [失敗] Fetch 發生 CORS 或網路錯誤:`, e.message || e); 
           }
         } else {
-          console.log(`-> [免授權直連] 直接載入圖片: ${baseUrl}`);
+          console.log(`-> [免授權直連] 嘗試建立 Image 物件直接載入...`);
         }
 
         try {
@@ -452,7 +400,7 @@ function WeatherImage({ srcList, alt, auth, useAuth = false, isBriefing = false 
           await new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => resolve();
-            img.onerror = () => reject();
+            img.onerror = (err) => reject(err);
             img.src = baseUrl;
           });
           if (!isMounted) break;
@@ -463,28 +411,32 @@ function WeatherImage({ srcList, alt, auth, useAuth = false, isBriefing = false 
           console.groupEnd();
           return;
         } catch(e) {
-          console.warn('❌ [失敗] 直接載入圖片失敗 (可能為 404 或 CORS 阻擋)。');
+          console.warn('❌ [失敗] 直接載入圖片失敗 (可能為 404 或 CORS 阻擋)。', e || '');
         }
 
-        try {
-          const proxySrc = `https://api.allorigins.win/raw?url=${encodeURIComponent(baseUrl)}`;
-          console.log(`-> 嘗試代理伺服器繞過 網址: ${proxySrc}`);
-          if (!isMounted) break;
-          await new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve();
-            img.onerror = () => reject();
-            img.src = proxySrc;
-          });
-          if (!isMounted) break;
-          setRenderSrc(proxySrc);
-          setStatus('success');
-          console.info('✅ [成功] 透過 Proxy 載入圖片成功！');
-          console.groupEnd();
-          console.groupEnd();
-          return;
-        } catch(e) {
-          console.warn('❌ [失敗] 代理伺服器亦無法載入此圖。準備切換至下一個歷史時段。');
+        if (!skipProxy) {
+          try {
+            const proxySrc = `https://api.allorigins.win/raw?url=${encodeURIComponent(baseUrl)}`;
+            console.log(`-> [嘗試代理伺服器繞過] 網址: ${proxySrc}`);
+            if (!isMounted) break;
+            await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve();
+              img.onerror = (err) => reject(err);
+              img.src = proxySrc;
+            });
+            if (!isMounted) break;
+            setRenderSrc(proxySrc);
+            setStatus('success');
+            console.info('✅ [成功] 透過 Proxy 載入圖片成功！');
+            console.groupEnd();
+            console.groupEnd();
+            return;
+          } catch(e) {
+            console.warn('❌ [失敗] 代理伺服器亦無法載入此圖。準備切換至下一個歷史時段。', e || '');
+          }
+        } else {
+          console.log('⏭️ [跳過代理] 依據 skipProxy 設定，不執行代理伺服器繞過測試。');
         }
 
         console.groupEnd(); 
@@ -503,7 +455,7 @@ function WeatherImage({ srcList, alt, auth, useAuth = false, isBriefing = false 
       isMounted = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [srcList, auth, useAuth, alt]);
+  }, [srcList, auth, useAuth, alt, skipProxy]);
 
   if (status === 'loading') {
     return (
@@ -612,6 +564,7 @@ function WeatherView({ zuluTime, appSettings }) {
             srcList={weatherSources[activeTab].urlList}
             alt={weatherSources[activeTab].title}
             auth={appSettings}
+            skipProxy={['airmet', 'sigwx_low', 'sigwx_mid', 'sigwx_high'].includes(activeTab)}
           />
         </div>
       </div>
@@ -695,7 +648,7 @@ export default function App() {
     username: '', 
     password: '', 
     geminiApiKey: '', 
-    aiModel: 'gemini-3.1-pro-preview' 
+    aiModel: envApiKey ? 'gemini-2.5-flash-preview-09-2025' : 'gemini-3.1-pro-preview' 
   });
 
   useEffect(() => {
@@ -720,7 +673,7 @@ export default function App() {
         console.error("無法解析使用者設定檔");
       }
     } else {
-      setAppSettings({ username: '', password: '', geminiApiKey: '', aiModel: 'gemini-3.1-pro-preview' });
+      setAppSettings({ username: '', password: '', geminiApiKey: '', aiModel: envApiKey ? 'gemini-2.5-flash-preview-09-2025' : 'gemini-3.1-pro-preview' });
     }
     
     setCurrentView('dashboard');
@@ -910,7 +863,7 @@ export default function App() {
           {currentView === 'dashboard' && <DashboardView flights={flights} onView={handleViewFlight} />}
           {currentView === 'create' && <CreateOFPView aircrafts={aircrafts} airports={airports} routes={routes} onSubmit={handleCreateSubmit} onCancel={() => navigateTo('dashboard')} />}
           {currentView === 'database' && <DatabaseView aircrafts={aircrafts} setAircrafts={setAircrafts} airports={airports} setAirports={setAirports} routes={routes} setRoutes={setRoutes} />}
-          {currentView === 'view' && <OFPBriefingView flight={selectedFlight} currentUser={currentUser} onSign={handleSignFlight} onUpdateFlight={handleUpdateFlight} appSettings={appSettings} />}
+          {currentView === 'view' && <OFPBriefingView flight={selectedFlight} currentUser={currentUser} onSign={handleSignFlight} onUpdateFlight={handleUpdateFlight} appSettings={appSettings} airports={airports} />}
           {currentView === 'weather' && <WeatherView zuluTime={zuluTime} appSettings={appSettings} />}
         </main>
       </div>
@@ -1017,17 +970,19 @@ function SettingsModal({ settings, onSave, onClose }) {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <KeyRound className="h-4 w-4 text-slate-500" />
                   </div>
-                  <input type="password" value={formData.geminiApiKey} onChange={(e) => setFormData({...formData, geminiApiKey: e.target.value})} className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-md pl-9 pr-3 py-2 focus:border-blue-500 outline-none text-sm font-mono" placeholder="輸入 API Key 以啟用分析功能" />
+                  <input type="password" value={envApiKey || formData.geminiApiKey} onChange={(e) => setFormData({...formData, geminiApiKey: e.target.value})} disabled={!!envApiKey} className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-md pl-9 pr-3 py-2 focus:border-blue-500 outline-none text-sm font-mono disabled:opacity-50" placeholder={envApiKey ? "已由系統環境自動載入安全金鑰" : "輸入 API Key 以啟用分析功能"} />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-slate-400">AI Model 選擇</label>
-                <select value={formData.aiModel} onChange={(e) => setFormData({...formData, aiModel: e.target.value})} className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-md p-2 focus:border-blue-500 outline-none text-sm">
+                <select value={envApiKey ? "gemini-2.5-flash-preview-09-2025" : formData.aiModel} onChange={(e) => setFormData({...formData, aiModel: e.target.value})} disabled={!!envApiKey} className="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-md p-2 focus:border-blue-500 outline-none text-sm disabled:opacity-50">
+                  <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash Preview (系統內建)</option>
                   <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (最強大)</option>
                   <option value="gemini-3-flash-preview">Gemini 3 Flash Preview (最新快速)</option>
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash (平衡)</option>
                   <option value="gemini-2.5-pro">Gemini 2.5 Pro (穩定)</option>
                 </select>
+                {!!envApiKey && <p className="text-[10px] text-blue-400 mt-1">目前已啟用系統內建環境參數</p>}
               </div>
             </div>
           </div>
@@ -1046,6 +1001,7 @@ function SettingsModal({ settings, onSave, onClose }) {
 
 function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, setRoutes }) {
   const [activeTab, setActiveTab] = useState('route');
+  const [isNotamModalOpen, setIsNotamModalOpen] = useState(false);
   
   const [acftForm, setAcftForm] = useState({ registration: '', type: '', airline: '' });
   const handleAcftSubmit = (e) => {
@@ -1066,6 +1022,33 @@ function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, 
   };
 
   const [editingRouteId, setEditingRouteId] = useState(null);
+
+  const handleImportNotams = (parsedNotams) => {
+    if (parsedNotams.length === 0) {
+       setIsNotamModalOpen(false);
+       return;
+    }
+    const newAirports = [...airports];
+    parsedNotams.forEach(pn => {
+      let apt = newAirports.find(a => a.icao === pn.icao);
+      if (!apt) {
+         apt = { icao: pn.icao, name: 'UNKNOWN AIRPORT', notams: [] };
+         newAirports.push(apt);
+      }
+      if (!apt.notams) apt.notams = [];
+      if (!apt.notams.includes(pn.content)) {
+         apt.notams.push(pn.content);
+      }
+    });
+    setAirports(newAirports);
+    setIsNotamModalOpen(false);
+  };
+
+  const handleClearNotams = (idx) => {
+    const newAirports = [...airports];
+    newAirports[idx] = { ...newAirports[idx], notams: [] };
+    setAirports(newAirports);
+  };
 
   const [rtForm, setRtForm] = useState({
     dep: '', arr: '', acftType: '', distance: '', blockTime: '', atcRoute: '',
@@ -1207,12 +1190,19 @@ function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, 
             </form>
           </div>
           <div className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col max-h-[600px]">
+            <div className="flex justify-between items-center px-5 py-3 bg-slate-900/50 border-b border-slate-800 shrink-0">
+               <h4 className="text-sm font-semibold text-slate-200">機場列表與 NOTAM 管理</h4>
+               <button onClick={() => setIsNotamModalOpen(true)} className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 text-xs px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors shadow-sm">
+                 <FileText className="w-3 h-3" /> 批次匯入多則 NOTAM
+               </button>
+            </div>
             <div className="overflow-x-auto overflow-y-auto custom-scrollbar">
               <table className="w-full text-left min-w-[500px]">
                 <thead>
                   <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider sticky top-0 z-10">
                     <th className="px-5 py-3">ICAO</th>
                     <th className="px-5 py-3">機場名稱</th>
+                    <th className="px-5 py-3">自訂 NOTAM</th>
                     <th className="px-5 py-3 text-right">操作</th>
                   </tr>
                 </thead>
@@ -1221,8 +1211,20 @@ function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, 
                     <tr key={idx} className="hover:bg-slate-900/50">
                       <td className="px-5 py-3 font-mono font-bold text-slate-200">{apt.icao}</td>
                       <td className="px-5 py-3 text-sm text-slate-300">{apt.name}</td>
-                      <td className="px-5 py-3 text-right">
-                        <button onClick={() => setAirports(airports.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-300 p-1"><Trash2 className="w-4 h-4"/></button>
+                      <td className="px-5 py-3 text-sm text-slate-300">
+                         {apt.notams?.length > 0 ? (
+                           <span className="bg-blue-900/30 text-blue-400 border border-blue-800/50 px-2 py-0.5 rounded text-xs font-medium">
+                             {apt.notams.length} 則
+                           </span>
+                         ) : (
+                           <span className="text-slate-600 text-xs">-</span>
+                         )}
+                      </td>
+                      <td className="px-5 py-3 text-right whitespace-nowrap">
+                        {apt.notams?.length > 0 && (
+                          <button onClick={() => handleClearNotams(idx)} className="text-yellow-400 hover:text-yellow-300 p-1.5 mr-1 bg-yellow-500/10 rounded transition-colors" title="清除自訂 NOTAM"><RefreshCw className="w-4 h-4"/></button>
+                        )}
+                        <button onClick={() => setAirports(airports.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-300 p-1.5 bg-red-500/10 rounded transition-colors" title="刪除機場"><Trash2 className="w-4 h-4"/></button>
                       </td>
                     </tr>
                   ))}
@@ -1333,6 +1335,68 @@ function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, 
           </div>
         </div>
       )}
+
+      {isNotamModalOpen && (
+        <NotamImportModal 
+          onClose={() => setIsNotamModalOpen(false)} 
+          onImport={handleImportNotams} 
+        />
+      )}
+    </div>
+  );
+}
+
+function NotamImportModal({ onClose, onImport }) {
+  const [text, setText] = useState('');
+
+  const handleProcess = () => {
+    // 以空白行為基準拆分段落
+    const blocks = text.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+    const parsedNotams = [];
+    
+    blocks.forEach(block => {
+      // 根據 A) ICAO 的標準特徵捕捉隸屬哪個機場 (支援 M 模式的跨行正則匹配)
+      const match = block.match(/^A\)\s*([A-Z]{4})/m);
+      if (match) {
+         parsedNotams.push({ icao: match[1].toUpperCase(), content: block });
+      }
+    });
+
+    onImport(parsedNotams);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+      <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50 shrink-0">
+          <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-blue-400" /> 批次匯入 NOTAM (Bulk Import)
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 flex-1 overflow-hidden flex flex-col">
+           <p className="text-sm text-slate-400 mb-3">
+             請在下方貼上原始 NOTAM 內容。系統會自動辨識 <code className="bg-slate-800 text-blue-300 px-1.5 py-0.5 rounded border border-slate-700">A) ICAO</code> 欄位，並將其拆解歸類至對應的機場中。<br/>
+             <span className="text-yellow-400 font-medium inline-flex items-center mt-1 gap-1">
+               <AlertTriangle className="w-3 h-3" /> 提示：請確保每則 NOTAM 之間「至少保留一行空白行」以便系統正確分段。
+             </span>
+           </p>
+           <textarea
+             className="w-full flex-1 bg-slate-950 border border-slate-700 rounded-md p-4 text-slate-300 font-mono text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none custom-scrollbar resize-none min-h-[300px]"
+             placeholder="A0101/26 NOTAMN&#10;Q) RCAA/QXXXX/IV/NBO/A/000/999/&#10;A) RCTP&#10;B) 2602250000 C) 2603312359&#10;E) TWY CLSD...&#10;&#10;A0102/26 NOTAMN&#10;Q) RCAA/QXXXX/...&#10;A) RCKH&#10;..."
+             value={text}
+             onChange={e => setText(e.target.value)}
+           ></textarea>
+        </div>
+        <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/50 shrink-0 flex justify-end gap-3">
+           <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors">取消</button>
+           <button onClick={handleProcess} disabled={!text.trim()} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors shadow-lg shadow-blue-900/20">
+              <CheckCircle className="w-4 h-4" /> 解析並匯入
+           </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1689,10 +1753,11 @@ function DashboardView({ flights, onView }) {
   );
 }
 
-function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSettings }) {
+function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSettings, airports }) {
   const [aiReport, setAiReport] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const abortControllerRef = useRef(null);
 
   if (!flight) return null;
 
@@ -1742,13 +1807,19 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
   }, [flight.date, flight.std]);
 
   const generateAIBriefing = async () => {
-    if (!appSettings.geminiApiKey) {
+    const effectiveKey = envApiKey || appSettings.geminiApiKey;
+    const effectiveModel = envApiKey ? 'gemini-2.5-flash-preview-09-2025' : appSettings.aiModel;
+
+    if (!effectiveKey) {
       setAiError("⚠ 請先點擊右上角「齒輪圖示 (系統設定)」，輸入您的 Gemini API Key 以啟用分析功能。");
       return;
     }
     
     setAiLoading(true);
     setAiError(null);
+    
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
     
     const altnsList = [flight.altn1, flight.altn2, flight.altn3].filter(Boolean).join(', ');
     
@@ -1759,7 +1830,7 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
         { type: 'ALTN2', icao: flight.altn2 },
         { type: 'ALTN3', icao: flight.altn3 }
     ].filter(item => item.icao).map(item => {
-        const nList = mockNotam(item.icao);
+        const nList = getNotamsForIcao(item.icao, airports);
         const joinedNotams = nList.map(n => n.replace(/\n/g, ' ')).join('\n  - ');
         return `[${item.type}] ${item.icao}:\n  - ${joinedNotams}`;
     }).join('\n');
@@ -1800,14 +1871,11 @@ ${notamsPrompt}
 - Dispatcher Remarks：${flight.remarks || 'NIL'}
 `;
 
-      console.group("🤖 [AI 智能分析] 傳送給 Gemini 的 Prompt 內容：");
-      console.log(prompt);
-      console.groupEnd();
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${appSettings.aiModel}:generateContent?key=${appSettings.geminiApiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent?key=${effectiveKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        signal
       });
 
       if (!response.ok) {
@@ -1820,9 +1888,19 @@ ${notamsPrompt}
       setAiReport(reportText);
     } catch (err) {
       console.error(err);
-      setAiError(`生成失敗: ${err.message}`);
+      if (err.name === 'AbortError') {
+        setAiError('已取消 AI 分析。');
+      } else {
+        setAiError(`生成失敗: ${err.message}`);
+      }
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const stopAiAnalysis = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
@@ -1863,7 +1941,7 @@ ${notamsPrompt}
            <div className="space-y-1">
               <p className="font-bold text-white print:text-black text-base sm:text-lg">{flight.airline} AERODISPATCH PRO - OFP</p>
               <p>FLIGHT: <span className="text-blue-400 print:text-blue-800 font-bold text-sm sm:text-base">{flight.callsign}</span>   DATE: {formatDate(flight.date)}</p>
-              <p>ACFT: {flight.aircraft}      REG: {flight.registration}</p>
+              <p>ACFT: {flight.aircraft}     REG: {flight.registration}</p>
            </div>
            <div className="md:text-right space-y-1 bg-slate-900/50 print:bg-transparent p-3 md:p-0 rounded-md">
               <p>DEP: <span className="text-green-400 print:text-green-800 font-bold">{flight.dep}</span>  BLK OUT: {flight.std}</p>
@@ -1968,10 +2046,10 @@ ${notamsPrompt}
              <CloudLightning className="w-4 h-4 print:hidden" /> 5. Enroute Weather Charts
            </h3>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-              <BriefingChart title="SFC-10000FT SIGWX" srcList={sigwxLowList} auth={null} useAuth={false} />
-              <BriefingChart title="10000-25000FT SIGWX" srcList={sigwxMidList} auth={null} useAuth={false} />
-              <BriefingChart title="SFC-45000FT SIGWX" srcList={sigwxHighList} auth={null} useAuth={false} />
-              <BriefingChart title="TPE AIRMET" srcList={airmetList} auth={appSettings} useAuth={true} />
+              <BriefingChart title="SFC-10000FT SIGWX" srcList={sigwxLowList} auth={null} useAuth={false} skipProxy={true} />
+              <BriefingChart title="10000-25000FT SIGWX" srcList={sigwxMidList} auth={null} useAuth={false} skipProxy={true} />
+              <BriefingChart title="SFC-45000FT SIGWX" srcList={sigwxHighList} auth={null} useAuth={false} skipProxy={true} />
+              <BriefingChart title="TPE AIRMET" srcList={airmetList} auth={appSettings} useAuth={true} skipProxy={true} />
            </div>
         </div>
 
@@ -1982,13 +2060,13 @@ ${notamsPrompt}
                <FileText className="w-4 h-4 print:hidden" /> 6. NOTAM (飛航公告)
              </h3>
              <a 
-                href={`https://notams.aim.faa.gov/notamSearch/nsapp.html#/results?searchType=0&locIds=${allIcaosForNotam}`} 
+                href="https://ais.anws.gov.tw" 
                 target="_blank" 
                 rel="noreferrer" 
                 className="ml-4 bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors print:hidden shadow-lg shadow-blue-900/20"
-                title="在 FAA 系統一次開啟本航班所有相關機場"
+                title="前往 ANWS AIS 系統查詢"
              >
-                <ExternalLink className="w-3 h-3 shrink-0" /> <span className="hidden sm:inline">於 FAA 系統開啟全部</span><span className="sm:hidden">FAA 查詢</span>
+                <ExternalLink className="w-3 h-3 shrink-0" /> <span className="hidden sm:inline">於 ANWS AIS 系統查詢</span><span className="sm:hidden">AIS 查詢</span>
              </a>
            </div>
            
@@ -2001,7 +2079,7 @@ ${notamsPrompt}
                 { type: 'ALTN 3', icao: flight.altn3 }
               ].map((item, idx) => {
                  if (!item.icao) return null;
-                 const notamsList = mockNotam(item.icao);
+                 const notamsList = getNotamsForIcao(item.icao, airports);
                  return <NotamAccordion key={`notam-${idx}`} typeLabel={item.type} icao={item.icao} notams={notamsList} />;
               })}
            </div>
@@ -2055,9 +2133,12 @@ ${notamsPrompt}
                   </div>
               )}
               {aiLoading && (
-                  <div className="flex flex-col items-center justify-center py-8 text-slate-400 space-y-3">
+                  <div className="flex flex-col items-center justify-center py-8 text-slate-400 space-y-4">
                       <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
                       <p className="font-medium animate-pulse">正在透過 Gemini 深入分析航路與氣象資料...</p>
+                      <button onClick={stopAiAnalysis} className="mt-2 text-xs bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30 px-4 py-2 rounded-md transition-colors flex items-center gap-2">
+                        <X className="w-4 h-4" /> 停止分析 (Stop)
+                      </button>
                   </div>
               )}
               {aiReport && (
