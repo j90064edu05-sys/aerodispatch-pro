@@ -3,7 +3,7 @@ import {
   PlaneTakeoff, PlaneLanding, FileText, CloudRain, Clock, 
   Settings, ChevronRight, ChevronLeft, Plus, Map, Info, AlertTriangle, 
   CheckCircle, Navigation, Printer, CloudLightning, RefreshCw, ZoomIn,
-  Menu, X, LogOut, User, KeyRound, ShieldCheck, Plane, Database, Trash2, Edit, Sparkles, Bot, Wrench, ExternalLink
+  Menu, X, LogOut, User, KeyRound, ShieldCheck, Plane, Database, Trash2, Edit, Sparkles, Bot, Wrench, ExternalLink, Upload
 } from 'lucide-react';
 
 // 環境提供的 API Key (如在外部執行會為空字串，系統將退回使用使用者自行輸入的 Key)
@@ -153,23 +153,6 @@ const getNotamsForIcao = (icao, airports) => {
       `A0101/26 NOTAMN\nQ) RCAA/QXXXX/IV/NBO/A/000/999/\nA) RCTP\nB) 2602250000 C) 2603312359\nE) TWY NC BETWEEN TWY N4 AND TWY N5 CLSD DUE TO MAINT.`,
       `A0105/26 NOTAMN\nQ) RCAA/QMRLC/IV/NBO/A/000/999/\nA) RCTP\nB) 2603010000 C) 2603011200\nE) RWY 05L/23R CLSD FOR RUBBER REMOVAL.`,
       `A0110/26 NOTAMN\nQ) RCAA/QFAXX/IV/NBO/A/000/999/\nA) RCTP\nB) 2602010000 C) 2605010000\nE) BIRD HAZARD REPORTED IN VICINITY OF AD. EXER CTN.`
-    ],
-    'KJFK': [
-      `A1234/26 NOTAMR A1200/26\nQ) KZWY/QMRXX/IV/NBO/A/000/999/\nA) KJFK\nB) 2602201200 C) 2603151200\nE) RWY 04L/22R CLSD FOR WIP.`,
-      `A1240/26 NOTAMN\nQ) KZWY/QXXXX/IV/NBO/A/000/999/\nA) KJFK\nB) 2603010000 C) 2603020000\nE) ILS RWY 13L GLIDE PATH OUT OF SERVICE.`
-    ],
-    'KBOS': [
-      `A0987/26 NOTAMN\nQ) KZBW/QXXXX/IV/NBO/A/000/999/\nA) KBOS\nB) 2603010000 C) 2603052359\nE) ILS RWY 04R U/S.`
-    ],
-    'KEWR': [
-      `A0888/26 NOTAMN\nQ) KZWY/QXXXX/IV/NBO/A/000/999/\nA) KEWR\nB) 2602281000 C) 2603102200\nE) VOR/DME EWR 108.4 UNUSABLE.`
-    ],
-    'VHHH': [
-      `A0505/26 NOTAMN\nQ) VHHK/QXXXX/IV/NBO/A/000/999/\nA) VHHH\nB) 2603010100 C) 2603010500\nE) RWY 07R/25L CLSD DUE TO RUBBER REMOVAL.`,
-      `A0506/26 NOTAMN\nQ) VHHK/QXXXX/IV/NBO/A/000/999/\nA) VHHH\nB) 2603010000 C) 2603022359\nE) TAXIWAY B CLSD FOR ALL ACFT.`
-    ],
-    'VMMC': [
-      `A0202/26 NOTAMN\nQ) VMFC/QXXXX/IV/NBO/A/000/999/\nA) VMMC\nB) 2602260000 C) 2604302359\nE) BIRD CONCENTRATION IN VICINITY OF AD.`
     ],
     'RCKH': [
       `A0303/26 NOTAMN\nQ) RCAA/QXXXX/IV/NBO/A/000/999/\nA) RCKH\nB) 2603010200 C) 2603010600\nE) MIL JET TRAINING ACT WILL TAKE PLACE IN RCR18.`,
@@ -1193,7 +1176,7 @@ function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, 
             <div className="flex justify-between items-center px-5 py-3 bg-slate-900/50 border-b border-slate-800 shrink-0">
                <h4 className="text-sm font-semibold text-slate-200">機場列表與 NOTAM 管理</h4>
                <button onClick={() => setIsNotamModalOpen(true)} className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 text-xs px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors shadow-sm">
-                 <FileText className="w-3 h-3" /> 批次匯入多則 NOTAM
+                 <FileText className="w-3 h-3" /> 匯入多則 NOTAM (.txt)
                </button>
             </div>
             <div className="overflow-x-auto overflow-y-auto custom-scrollbar">
@@ -1347,27 +1330,51 @@ function DatabaseView({ aircrafts, setAircrafts, airports, setAirports, routes, 
 }
 
 function NotamImportModal({ onClose, onImport }) {
-  const [text, setText] = useState('');
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState('');
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      if (selectedFile.type === "text/plain" || selectedFile.name.endsWith('.txt')) {
+        setFile(selectedFile);
+        setError('');
+      } else {
+        setFile(null);
+        setError('請上傳 .txt 格式的純文字檔案。');
+      }
+    }
+  };
 
   const handleProcess = () => {
-    // 以空白行為基準拆分段落
-    const blocks = text.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
-    const parsedNotams = [];
-    
-    blocks.forEach(block => {
-      // 根據 A) ICAO 的標準特徵捕捉隸屬哪個機場 (支援 M 模式的跨行正則匹配)
-      const match = block.match(/^A\)\s*([A-Z]{4})/m);
-      if (match) {
-         parsedNotams.push({ icao: match[1].toUpperCase(), content: block });
-      }
-    });
+    if (!file) return;
 
-    onImport(parsedNotams);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      // 以空白行為基準拆分段落
+      const blocks = text.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+      const parsedNotams = [];
+      
+      blocks.forEach(block => {
+        // 根據 A) ICAO 的標準特徵捕捉隸屬哪個機場 (支援 M 模式的跨行正則匹配)
+        const match = block.match(/^A\)\s*([A-Z]{4})/m);
+        if (match) {
+           parsedNotams.push({ icao: match[1].toUpperCase(), content: block });
+        }
+      });
+
+      onImport(parsedNotams);
+    };
+    reader.onerror = () => {
+      setError('讀取檔案時發生錯誤。');
+    };
+    reader.readAsText(file);
   };
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
         <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50 shrink-0">
           <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-400" /> 批次匯入 NOTAM (Bulk Import)
@@ -1376,24 +1383,45 @@ function NotamImportModal({ onClose, onImport }) {
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6 flex-1 overflow-hidden flex flex-col">
-           <p className="text-sm text-slate-400 mb-3">
-             請在下方貼上原始 NOTAM 內容。系統會自動辨識 <code className="bg-slate-800 text-blue-300 px-1.5 py-0.5 rounded border border-slate-700">A) ICAO</code> 欄位，並將其拆解歸類至對應的機場中。<br/>
-             <span className="text-yellow-400 font-medium inline-flex items-center mt-1 gap-1">
-               <AlertTriangle className="w-3 h-3" /> 提示：請確保每則 NOTAM 之間「至少保留一行空白行」以便系統正確分段。
+        <div className="p-6 flex-1 flex flex-col space-y-4">
+           <p className="text-sm text-slate-400 leading-relaxed">
+             請選擇包含 NOTAM 的 <code className="bg-slate-800 text-blue-300 px-1.5 py-0.5 rounded border border-slate-700">.txt</code> 檔案上傳。系統會自動辨識 <code className="bg-slate-800 text-blue-300 px-1.5 py-0.5 rounded border border-slate-700">A) ICAO</code> 欄位，並將其拆解歸類至對應的機場中。<br/>
+             <span className="text-yellow-400 font-medium inline-flex items-center mt-2 gap-1">
+               <AlertTriangle className="w-3 h-3" /> 提示：請確保檔案中每則 NOTAM 之間「至少保留一行空白行」以便系統正確分段。
              </span>
            </p>
-           <textarea
-             className="w-full flex-1 bg-slate-950 border border-slate-700 rounded-md p-4 text-slate-300 font-mono text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none custom-scrollbar resize-none min-h-[300px]"
-             placeholder="A0101/26 NOTAMN&#10;Q) RCAA/QXXXX/IV/NBO/A/000/999/&#10;A) RCTP&#10;B) 2602250000 C) 2603312359&#10;E) TWY CLSD...&#10;&#10;A0102/26 NOTAMN&#10;Q) RCAA/QXXXX/...&#10;A) RCKH&#10;..."
-             value={text}
-             onChange={e => setText(e.target.value)}
-           ></textarea>
+
+           <div className="flex flex-col items-center justify-center w-full mt-4">
+             <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-700 border-dashed rounded-lg cursor-pointer bg-slate-950/50 hover:bg-slate-800/50 transition-colors">
+               <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                 <Upload className="w-10 h-10 mb-3 text-slate-500" />
+                 <p className="mb-2 text-sm text-slate-400">
+                   <span className="font-semibold text-blue-400">點擊選擇檔案</span> 或拖曳檔案至此
+                 </p>
+                 <p className="text-xs text-slate-500">僅支援 .txt (純文字檔案)</p>
+               </div>
+               <input id="dropzone-file" type="file" className="hidden" accept=".txt,text/plain" onChange={handleFileChange} />
+             </label>
+           </div>
+           
+           {file && (
+             <div className="flex items-center gap-2 text-sm text-green-400 bg-green-900/10 p-3 rounded border border-green-900/30">
+               <CheckCircle className="w-4 h-4 shrink-0" />
+               <span className="truncate">已選擇: {file.name}</span>
+             </div>
+           )}
+           
+           {error && (
+             <div className="text-sm text-red-400 bg-red-900/10 p-3 rounded border border-red-900/30 flex items-center gap-2">
+               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
+             </div>
+           )}
+
         </div>
         <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/50 shrink-0 flex justify-end gap-3">
            <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors">取消</button>
-           <button onClick={handleProcess} disabled={!text.trim()} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors shadow-lg shadow-blue-900/20">
-              <CheckCircle className="w-4 h-4" /> 解析並匯入
+           <button onClick={handleProcess} disabled={!file} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors shadow-lg shadow-blue-900/20">
+              <CheckCircle className="w-4 h-4" /> 解析並匯入檔案
            </button>
         </div>
       </div>
