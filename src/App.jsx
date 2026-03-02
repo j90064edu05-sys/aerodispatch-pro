@@ -621,6 +621,7 @@ export default function App() {
   const [routes, setRoutes] = useState(initialRoutes);
   
   const [selectedFlight, setSelectedFlight] = useState(null);
+  const [editingFlightData, setEditingFlightData] = useState(null);
   const [zuluTime, setZuluTime] = useState('');
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -665,6 +666,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     setSelectedFlight(null);
+    setEditingFlightData(null);
   };
 
   const handleViewFlight = (flight) => {
@@ -673,15 +675,35 @@ export default function App() {
     setIsMobileMenuOpen(false); 
   };
 
+  const handleEditFlight = (flight) => {
+    setEditingFlightData(flight);
+    setCurrentView('create');
+  };
+
   const handleCreateSubmit = (newFlight) => {
-    setFlights([...flights, { ...newFlight, id: Date.now().toString() }]);
-    setCurrentView('dashboard');
+    if (newFlight.id) {
+      setFlights(flights.map(f => f.id === newFlight.id ? newFlight : f));
+      setSelectedFlight(newFlight);
+      setCurrentView('view');
+    } else {
+      setFlights([...flights, { ...newFlight, id: Date.now().toString() }]);
+      setCurrentView('dashboard');
+    }
+    setEditingFlightData(null);
   };
 
   const handleUpdateFlight = (updatedFlight) => {
     setFlights(flights.map(f => f.id === updatedFlight.id ? updatedFlight : f));
     if (selectedFlight?.id === updatedFlight.id) {
       setSelectedFlight(updatedFlight);
+    }
+  };
+
+  const handleDeleteFlight = (flightId) => {
+    setFlights(flights.filter(f => f.id !== flightId));
+    if (selectedFlight?.id === flightId) {
+      setSelectedFlight(null);
+      setCurrentView('dashboard');
     }
   };
 
@@ -707,6 +729,7 @@ export default function App() {
   };
 
   const navigateTo = (view) => {
+    if (view === 'create') setEditingFlightData(null);
     setCurrentView(view);
     setIsMobileMenuOpen(false);
   };
@@ -830,7 +853,7 @@ export default function App() {
             </button>
             <h2 className="text-lg font-semibold text-slate-100 truncate flex items-center gap-2">
               {currentView === 'dashboard' && (isDispatcher ? '航班監控中心 (Dispatch Center)' : '機組員入口網 (Flight Crew Portal)')}
-              {currentView === 'create' && '簽派放行與飛行計畫建立 (Dispatch Release)'}
+              {currentView === 'create' && (editingFlightData ? '重新編輯飛行計畫 (Edit OFP)' : '簽派放行與飛行計畫建立 (Dispatch Release)')}
               {currentView === 'database' && '資料庫管理 (Database Management)'}
               {currentView === 'view' && <span className="truncate">飛行計畫簡報 - <span className="text-blue-400">{selectedFlight?.callsign}</span></span>}
               {currentView === 'weather' && <><CloudLightning className="text-blue-400 w-5 h-5 shrink-0"/> <span className="truncate">航空氣象圖資</span></>}
@@ -843,10 +866,10 @@ export default function App() {
         </header>
 
         <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative print:p-0 print:overflow-visible custom-scrollbar">
-          {currentView === 'dashboard' && <DashboardView flights={flights} onView={handleViewFlight} />}
-          {currentView === 'create' && <CreateOFPView aircrafts={aircrafts} airports={airports} routes={routes} onSubmit={handleCreateSubmit} onCancel={() => navigateTo('dashboard')} />}
+          {currentView === 'dashboard' && <DashboardView flights={flights} onView={handleViewFlight} onDelete={handleDeleteFlight} currentUser={currentUser} />}
+          {currentView === 'create' && <CreateOFPView aircrafts={aircrafts} airports={airports} routes={routes} initialData={editingFlightData} onSubmit={handleCreateSubmit} onCancel={() => navigateTo('dashboard')} />}
           {currentView === 'database' && <DatabaseView aircrafts={aircrafts} setAircrafts={setAircrafts} airports={airports} setAirports={setAirports} routes={routes} setRoutes={setRoutes} />}
-          {currentView === 'view' && <OFPBriefingView flight={selectedFlight} currentUser={currentUser} onSign={handleSignFlight} onUpdateFlight={handleUpdateFlight} appSettings={appSettings} airports={airports} />}
+          {currentView === 'view' && <OFPBriefingView flight={selectedFlight} currentUser={currentUser} onSign={handleSignFlight} onUpdateFlight={handleUpdateFlight} onEditFlight={handleEditFlight} onDeleteFlight={handleDeleteFlight} appSettings={appSettings} airports={airports} />}
           {currentView === 'weather' && <WeatherView zuluTime={zuluTime} appSettings={appSettings} />}
         </main>
       </div>
@@ -1429,16 +1452,57 @@ function NotamImportModal({ onClose, onImport }) {
   );
 }
 
-function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    callsign: '', airline: '', aircraft: '', registration: '',
-    date: new Date().toISOString().split('T')[0],
-    dep: '', arr: '', std: '', sta: '', route: '', zfw: '', payload: '',
-    altn1: '', altn2: '', altn3: '',
-    trip: '', altn1Fuel: '', altn2Fuel: '', altn3Fuel: '', finres: '', cont: '', taxi: '', extra: '',
-    remarks: 'NIL SIG WX ENROUTE.',
-    ddItems: 'NIL'
-  });
+function CreateOFPView({ aircrafts, airports, routes, initialData, onSubmit, onCancel }) {
+  const getInitialState = () => {
+    if (initialData) {
+      return {
+        id: initialData.id,
+        callsign: initialData.callsign,
+        airline: initialData.airline,
+        aircraft: initialData.aircraft,
+        registration: initialData.registration,
+        date: initialData.date,
+        dep: initialData.dep,
+        arr: initialData.arr,
+        std: initialData.std,
+        sta: initialData.sta,
+        route: initialData.route,
+        zfw: initialData.weights?.zfw || '',
+        payload: initialData.weights?.payload || '',
+        altn1: initialData.altn1 || '',
+        altn2: initialData.altn2 || '',
+        altn3: initialData.altn3 || '',
+        trip: initialData.fuel?.trip || '',
+        altn1Fuel: initialData.fuel?.altn1 || '',
+        altn2Fuel: initialData.fuel?.altn2 || '',
+        altn3Fuel: initialData.fuel?.altn3 || '',
+        finres: initialData.fuel?.finres || '',
+        cont: initialData.fuel?.cont || '',
+        taxi: initialData.fuel?.taxi || '',
+        extra: initialData.fuel?.extra || '',
+        remarks: initialData.remarks || 'NIL SIG WX ENROUTE.',
+        ddItems: initialData.ddItems || 'NIL',
+        aiBriefing: initialData.aiBriefing || null
+      };
+    }
+    return {
+      callsign: '', airline: '', aircraft: '', registration: '',
+      date: new Date().toISOString().split('T')[0],
+      dep: '', arr: '', std: '', sta: '', route: '', zfw: '', payload: '',
+      altn1: '', altn2: '', altn3: '',
+      trip: '', altn1Fuel: '', altn2Fuel: '', altn3Fuel: '', finres: '', cont: '', taxi: '', extra: '',
+      remarks: 'NIL SIG WX ENROUTE.',
+      ddItems: 'NIL',
+      aiBriefing: null
+    };
+  };
+
+  const [formData, setFormData] = useState(getInitialState());
+
+  // 用於追蹤是否為使用者切換航線，避免初始加載時被 default 蓋掉已編輯資料
+  const [prevRouteKey, setPrevRouteKey] = useState(
+    initialData ? `${initialData.dep}-${initialData.arr}-${initialData.aircraft}` : ''
+  );
 
   const matchingRoute = useMemo(() => {
     return routes.find(r => 
@@ -1540,9 +1604,11 @@ function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
     }
   };
 
-  // 當航線匹配時，強制洗掉舊資料並套用航線資料庫設定
+  // 當航線匹配時，動態帶入航線資料庫設定 (僅在切換時觸發)
   useEffect(() => {
-    if (matchingRoute) {
+    const currentKey = `${formData.dep}-${formData.arr}-${formData.aircraft}`;
+    
+    if (matchingRoute && currentKey !== prevRouteKey) {
       setFormData(prev => {
         let updatedSta = prev.sta;
         // 若航線切換成功時，Block Out 已填入且有 Block Time，就順手算一下 Block In 帶入
@@ -1552,23 +1618,26 @@ function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
 
         return { 
           ...prev, 
-          route: prev.route || matchingRoute.atcRoute || '',
-          altn1: prev.altn1 || matchingRoute.altn1Apt || '',
-          altn2: prev.altn2 || matchingRoute.altn2Apt || '',
-          altn3: prev.altn3 || matchingRoute.altn3Apt || '',
-          trip: prev.trip || matchingRoute.trip || '',
-          altn1Fuel: prev.altn1Fuel || matchingRoute.altn1 || '',
-          altn2Fuel: prev.altn2Fuel || matchingRoute.altn2 || '',
-          altn3Fuel: prev.altn3Fuel || matchingRoute.altn3 || '',
-          finres: prev.finres || matchingRoute.finres || '',
-          cont: prev.cont || matchingRoute.cont || '',
-          taxi: prev.taxi || matchingRoute.taxi || '',
-          extra: prev.extra || matchingRoute.extra || '',
+          route: matchingRoute.atcRoute || '',
+          altn1: matchingRoute.altn1Apt || '',
+          altn2: matchingRoute.altn2Apt || '',
+          altn3: matchingRoute.altn3Apt || '',
+          trip: matchingRoute.trip || '',
+          altn1Fuel: matchingRoute.altn1 || '',
+          altn2Fuel: matchingRoute.altn2 || '',
+          altn3Fuel: matchingRoute.altn3 || '',
+          finres: matchingRoute.finres || '',
+          cont: matchingRoute.cont || '',
+          taxi: matchingRoute.taxi || '',
+          extra: matchingRoute.extra || '',
           sta: updatedSta
         };
       });
+      setPrevRouteKey(currentKey);
+    } else if (!matchingRoute && currentKey !== prevRouteKey) {
+      setPrevRouteKey(currentKey);
     }
-  }, [matchingRoute]);
+  }, [matchingRoute, formData.dep, formData.arr, formData.aircraft, prevRouteKey]);
 
   // 動態計算油量 (依據當前表單輸入值)
   const zfwNum = parseInt(formData.zfw) || 60000;
@@ -1592,7 +1661,8 @@ function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
       status: 'PREFLIGHT',
       dispatcherSign: null, captainSign: null,
       weights: { zfw: zfwNum, payload: parseInt(formData.payload) || 15000, tow: zfwNum + totalFuel, law: zfwNum + totalFuel - tF },
-      fuel: { trip: tF, cont: cF, altn1: a1F, altn2: parseInt(formData.altn2Fuel)||0, altn3: parseInt(formData.altn3Fuel)||0, finres: frF, extra: exF, taxi: txF }
+      fuel: { trip: tF, cont: cF, altn1: a1F, altn2: parseInt(formData.altn2Fuel)||0, altn3: parseInt(formData.altn3Fuel)||0, finres: frF, extra: exF, taxi: txF },
+      aiBriefing: null // 重新生成計畫時清空舊有的 AI 簡報，確保資料同步
     };
     onSubmit(newFlight);
   };
@@ -1604,7 +1674,9 @@ function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
       <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-xl w-full">
         <div className="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-4 flex items-center gap-3">
           <Settings className="w-5 h-5 text-blue-400 shrink-0" />
-          <h3 className="font-semibold text-lg text-slate-100">建立新營運飛行計畫 (Generate New OFP)</h3>
+          <h3 className="font-semibold text-lg text-slate-100">
+            {initialData ? '重新編輯飛行計畫 (Edit OFP)' : '建立新營運飛行計畫 (Generate New OFP)'}
+          </h3>
         </div>
         
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-8">
@@ -1702,7 +1774,7 @@ function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
           <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-slate-800">
             <button type="button" onClick={onCancel} className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-white bg-slate-800 sm:bg-transparent hover:bg-slate-700 sm:hover:bg-slate-800 rounded-md transition-colors border border-transparent sm:border-slate-700">取消 (Cancel)</button>
             <button type="submit" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-900/20 border border-blue-500">
-              <CheckCircle className="w-4 h-4" /> 產生飛行計畫 (Generate OFP)
+              <CheckCircle className="w-4 h-4" /> {initialData ? '儲存並重新生成 (Save & Regenerate)' : '產生飛行計畫 (Generate OFP)'}
             </button>
           </div>
         </form>
@@ -1711,7 +1783,9 @@ function CreateOFPView({ aircrafts, airports, routes, onSubmit, onCancel }) {
   );
 }
 
-function DashboardView({ flights, onView }) {
+function DashboardView({ flights, onView, onDelete, currentUser }) {
+  const isDispatcher = currentUser?.role === 'dispatcher';
+
   return (
     <div className="space-y-6 w-full max-w-7xl mx-auto">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
@@ -1766,10 +1840,15 @@ function DashboardView({ flights, onView }) {
                       {flight.status}
                     </span>
                   </td>
-                  <td className="px-4 lg:px-6 py-4 text-right">
-                    <button onClick={() => onView(flight)} className="text-sm text-blue-400 font-medium bg-blue-500/10 px-3 py-1.5 rounded transition-all opacity-80 hover:opacity-100 hover:bg-blue-500/20 whitespace-nowrap">
+                  <td className="px-4 lg:px-6 py-4 text-right whitespace-nowrap">
+                    <button onClick={() => onView(flight)} className="text-sm text-blue-400 font-medium bg-blue-500/10 px-3 py-1.5 rounded transition-all opacity-80 hover:opacity-100 hover:bg-blue-500/20 mr-2">
                       開啟計畫 &rarr;
                     </button>
+                    {isDispatcher && (
+                      <button onClick={() => onDelete(flight.id)} className="text-red-400 hover:text-red-300 p-1.5 bg-red-500/10 rounded transition-colors align-middle inline-flex" title="刪除計畫">
+                        <Trash2 className="w-4 h-4"/>
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -1781,8 +1860,7 @@ function DashboardView({ flights, onView }) {
   );
 }
 
-function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSettings, airports }) {
-  const [aiReport, setAiReport] = useState(null);
+function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, onEditFlight, onDeleteFlight, appSettings, airports }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
   const abortControllerRef = useRef(null);
@@ -1851,13 +1929,19 @@ function OFPBriefingView({ flight, currentUser, onSign, onUpdateFlight, appSetti
     
     const altnsList = [flight.altn1, flight.altn2, flight.altn3].filter(Boolean).join(', ');
     
+    const seenIcaosForPrompt = new Set();
     const notamsPrompt = [
         { type: 'DEP', icao: flight.dep },
         { type: 'ARR', icao: flight.arr },
         { type: 'ALTN1', icao: flight.altn1 },
         { type: 'ALTN2', icao: flight.altn2 },
         { type: 'ALTN3', icao: flight.altn3 }
-    ].filter(item => item.icao).map(item => {
+    ].filter(item => {
+        if (!item.icao) return false;
+        if (seenIcaosForPrompt.has(item.icao)) return false;
+        seenIcaosForPrompt.add(item.icao);
+        return true;
+    }).map(item => {
         const nList = getNotamsForIcao(item.icao, airports);
         const joinedNotams = nList.map(n => n.replace(/\n/g, ' ')).join('\n  - ');
         return `[${item.type}] ${item.icao}:\n  - ${joinedNotams}`;
@@ -1913,7 +1997,7 @@ ${notamsPrompt}
 
       const data = await response.json();
       const reportText = data.candidates?.[0]?.content?.parts?.[0]?.text || '無法生成分析內容。';
-      setAiReport(reportText);
+      onUpdateFlight({ ...flight, aiBriefing: reportText });
     } catch (err) {
       console.error(err);
       if (err.name === 'AbortError') {
@@ -1932,12 +2016,26 @@ ${notamsPrompt}
     }
   };
 
-  const allIcaosForNotam = [flight.dep, flight.arr, flight.altn1, flight.altn2, flight.altn3].filter(Boolean).join(',');
+  const allIcaosForNotam = [...new Set([flight.dep, flight.arr, flight.altn1, flight.altn2, flight.altn3].filter(Boolean))].join(',');
+
+  const seenIcaosForRender = new Set();
+  const uniqueNotamItems = [
+    { type: 'DEP', icao: flight.dep },
+    { type: 'ARR', icao: flight.arr },
+    { type: 'ALTN 1', icao: flight.altn1 },
+    { type: 'ALTN 2', icao: flight.altn2 },
+    { type: 'ALTN 3', icao: flight.altn3 }
+  ].filter(item => {
+    if (!item.icao) return false;
+    if (seenIcaosForRender.has(item.icao)) return false;
+    seenIcaosForRender.add(item.icao);
+    return true;
+  });
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-20 print:pb-0 print:space-y-0 w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-950 p-4 rounded-xl border border-slate-800 gap-4 print:hidden shadow-lg w-full">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-slate-950 p-4 rounded-xl border border-slate-800 gap-4 print:hidden shadow-lg w-full">
+        <div className="flex items-center gap-3 w-full xl:w-auto">
           <div className={`p-2 rounded-full shrink-0 ${flight.status === 'ACCEPTED' ? 'bg-indigo-500/20 text-indigo-400' : flight.status === 'CLEARED' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
             {flight.status === 'ACCEPTED' ? <ShieldCheck className="w-6 h-6" /> : flight.status === 'CLEARED' ? <CheckCircle className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6" />}
           </div>
@@ -1946,19 +2044,31 @@ ${notamsPrompt}
             <p className="text-xs sm:text-sm text-slate-400 truncate">DISPATCH RELEASE & OFP</p>
           </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto shrink-0">
-          <button onClick={handlePrint} className="flex-1 sm:flex-none justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-slate-700">
+        <div className="flex gap-2 w-full xl:w-auto shrink-0 flex-wrap justify-end">
+          <button onClick={handlePrint} className="flex-1 sm:flex-none justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-slate-700">
             <Printer className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">匯出/列印</span><span className="sm:hidden">列印</span>
           </button>
           
+          {isDispatcher && (
+            <button onClick={() => onEditFlight(flight)} className="flex-1 sm:flex-none justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-slate-700">
+              <Edit className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">重新編輯 (Edit)</span><span className="sm:hidden">編輯</span>
+            </button>
+          )}
+
+          {isDispatcher && (
+            <button onClick={() => onDeleteFlight(flight.id)} className="flex-1 sm:flex-none justify-center bg-red-900/30 hover:bg-red-600 text-red-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-red-800/50">
+              <Trash2 className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">刪除 (Delete)</span><span className="sm:hidden">刪除</span>
+            </button>
+          )}
+
           {isDispatcher && !flight.dispatcherSign && (
-            <button onClick={() => onSign(flight.id, 'dispatcher')} className="flex-1 sm:flex-none justify-center bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-green-900/20">
-              <CheckCircle className="w-4 h-4 shrink-0" /> 簽派放行 (Sign)
+            <button onClick={() => onSign(flight.id, 'dispatcher')} className="flex-1 sm:flex-none justify-center bg-green-600 hover:bg-green-500 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-green-900/20">
+              <CheckCircle className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">簽派放行 (Sign)</span><span className="sm:hidden">放行</span>
             </button>
           )}
           {isPilot && flight.dispatcherSign && !flight.captainSign && (
-            <button onClick={() => onSign(flight.id, 'pilot')} className="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-indigo-900/20">
-              <Plane className="w-4 h-4 shrink-0" /> 機長簽收 (Accept)
+            <button onClick={() => onSign(flight.id, 'pilot')} className="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-indigo-900/20">
+              <Plane className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">機長簽收 (Accept)</span><span className="sm:hidden">簽收</span>
             </button>
           )}
         </div>
@@ -2099,14 +2209,7 @@ ${notamsPrompt}
            </div>
            
            <div className="space-y-3">
-              {[
-                { type: 'DEP', icao: flight.dep },
-                { type: 'ARR', icao: flight.arr },
-                { type: 'ALTN 1', icao: flight.altn1 },
-                { type: 'ALTN 2', icao: flight.altn2 },
-                { type: 'ALTN 3', icao: flight.altn3 }
-              ].map((item, idx) => {
-                 if (!item.icao) return null;
+              {uniqueNotamItems.map((item, idx) => {
                  const notamsList = getNotamsForIcao(item.icao, airports);
                  return <NotamAccordion key={`notam-${idx}`} typeLabel={item.type} icao={item.icao} notams={notamsList} />;
               })}
@@ -2145,7 +2248,7 @@ ${notamsPrompt}
              <Sparkles className="w-4 h-4 print:hidden text-blue-400" /> 8. AI Flight Briefing Analysis
            </h3>
            <div className="bg-slate-900/60 print:bg-transparent print:p-0 print:border-none p-5 rounded-md border border-slate-700 text-xs sm:text-sm">
-              {!aiReport && !aiLoading && (
+              {!flight.aiBriefing && !aiLoading && (
                   <div className="text-center py-6 print:hidden">
                      <p className="text-slate-400 mb-4 leading-relaxed max-w-md mx-auto">
                        點擊下方按鈕，使用 Gemini AI 自動擷取上方飛行計畫的油量、航路與備註資料，產生專業的「航班風險與注意事項」簡報。
@@ -2169,11 +2272,25 @@ ${notamsPrompt}
                       </button>
                   </div>
               )}
-              {aiReport && (
+              {flight.aiBriefing && (
                   <div className="space-y-4">
-                      <div className="text-slate-300 print:text-black whitespace-pre-wrap leading-relaxed font-sans text-[13px] sm:text-sm bg-slate-950/50 print:bg-transparent p-4 rounded-md border border-slate-800/50 print:border-none">
-                          {aiReport}
-                      </div>
+                      {isDispatcher ? (
+                        <div className="bg-slate-950/50 print:bg-transparent p-4 rounded-md border border-slate-800/50 print:border-none">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-[10px] text-blue-400 print:hidden flex items-center gap-1"><Edit className="w-3 h-3"/> 簽派員可自由編輯分析結果</span>
+                            </div>
+                            <textarea
+                              className="w-full bg-transparent focus:border-blue-500 outline-none text-slate-300 print:text-black leading-relaxed font-sans text-[13px] sm:text-sm custom-scrollbar resize-y min-h-[300px]"
+                              value={flight.aiBriefing}
+                              onChange={(e) => onUpdateFlight({ ...flight, aiBriefing: e.target.value })}
+                            />
+                        </div>
+                      ) : (
+                        <div className="text-slate-300 print:text-black whitespace-pre-wrap leading-relaxed font-sans text-[13px] sm:text-sm bg-slate-950/50 print:bg-transparent p-4 rounded-md border border-slate-800/50 print:border-none">
+                            {flight.aiBriefing}
+                        </div>
+                      )}
+                      
                       <div className="print:hidden text-right pt-3 border-t border-slate-800/50 flex justify-end">
                          <button onClick={generateAIBriefing} className="text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors border border-slate-700 hover:bg-slate-800 px-3 py-1.5 rounded">
                             <RefreshCw className="w-3 h-3" /> 重新分析 (Regenerate)
